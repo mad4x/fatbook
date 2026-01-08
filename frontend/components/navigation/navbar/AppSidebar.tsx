@@ -12,8 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { SIDEBAR_ELEMENTS } from "@/constants";
 import {Button} from "@/components/ui/button";
-import Image from "next/image";
-import {useSession} from "next-auth/react";
 import Link from "next/link";
 import {auth} from "@/auth";
 
