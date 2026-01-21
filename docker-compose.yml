@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # 1. Database (Resta uguale)
+  # 1. Database
   db:
     image: postgres:15-alpine
     container_name: postgres-db
@@ -12,25 +12,36 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # 2. Backend Spring Boot (NUOVO)
+  # 1.1 Manager Database
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    # HO RIMOSSO 'networks' QUI PERCHÉ USA QUELLA DI DEFAULT
+
+  # 2. Backend Spring Boot
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: spring-backend
     ports:
-      - "8080:8080" # Spring gira sulla 8080 di solito
+      - "8080:8080"
     depends_on:
       - db
     environment:
-      # Spring configura il DB usando queste variabili
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      # Istruzione per aggiornare le tabelle automaticamente all'avvio
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
 
-  # 3. Frontend Next.js (MODIFICATO)
+  # 3. Frontend Next.js
   frontend:
     build:
       context: ./frontend
@@ -41,9 +52,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-
-    # QUESTA È LA MODIFICA FONDAMENTALE:
-    # Carica tutte le variabili dal file .env dentro il container
     env_file:
       - .env
 
