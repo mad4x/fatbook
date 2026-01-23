@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SIDEBAR_ELEMENTS } from "@/constants";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
-import {auth} from "@/auth";
+import {auth, signOut} from "@/auth";
 
 const AppSidebar = async () => {
   const session = await auth();
@@ -50,12 +50,24 @@ const AppSidebar = async () => {
             </Button>
           </a>
         ) : (
-          <div className="flex flex-row gap-2 items-center">
-            <Avatar>
-              <AvatarImage src={session?.user?.image ?? ""} />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-            <p>{session.user?.name}</p>
+          <div className="flex flex-col gap-3 items-center">
+            <div className="flex flex-row gap-2 items-center">
+              <Avatar>
+                <AvatarImage src={session?.user?.image ?? ""} />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+              <p>{session.user?.name}</p>
+            </div>
+            <form
+              className="w-full "
+              action={async () => {
+              "use server"
+              await signOut();
+            }}>
+                <Button
+                  className="w-full"
+                  type="submit">Disconnettiti</Button>
+            </form>
           </div>
 
         )}
