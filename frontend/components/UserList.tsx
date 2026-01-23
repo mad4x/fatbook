@@ -48,7 +48,7 @@ export default function UserList() {
                         <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4 text-slate-900 font-medium">{user.nome}</td>
                             <td className="px-6 py-4 text-slate-600">{user.email}</td>
-                            <td className="px-6 py-4 text-slate-400 font-mono text-sm">••••••••</td>
+                            <td className="px-6 py-4 text-slate-400 font-mono text-sm">{user.password}</td>
                         </tr>
                     ))}
                     {users.length === 0 && !loading && (
