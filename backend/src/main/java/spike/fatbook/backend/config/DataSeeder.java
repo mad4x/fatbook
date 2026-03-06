@@ -51,7 +51,7 @@ public class DataSeeder implements CommandLineRunner {
         Docente profVecchio = new Docente("Emanuele", "Vecchio");
         Docente profDaidone = new Docente("Gioacchino", "Daidone");
         Docente profReligione = new Docente("D'Amico", "Religione");
-        Docente profAlternativa = new Docente("Verdi", "Alternativa");
+        Docente profAlternativa = new Docente("Emanuele", "Salvatore");
         
         docenteRepo.saveAll(List.of(profHu, profZambon, profPerrone, profPaesano, 
                                 profBottiglieri, profGiorgio, profCaristi, profVecchio, 
@@ -113,7 +113,7 @@ public class DataSeeder implements CommandLineRunner {
         
         // Logica Sdoppiamento Religione/Alternativa
         inserisciOra(3, "Religione", GiornoSettimana.VENERDI, classe5L, profReligione, null, aulaC21, false);
-        inserisciOra(3, "Alternativa", GiornoSettimana.VENERDI, classe5L, profAlternativa, null, aulaC21, true);
+        inserisciOra(3, "Alternativa", GiornoSettimana.VENERDI, classe5L, profAlternativa, null, aulaC01, true);
         
         inserisciOra(4, "GPOI", GiornoSettimana.VENERDI, classe5L, profPerrone, null, aulaC21, false);
         inserisciOra(5, "Storia", GiornoSettimana.VENERDI, classe5L, profGiorgio, null, aulaC21, false);
