@@ -1,29 +1,27 @@
 package spike.fatbook.backend.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 
 
 @Entity
-@Table(name = "docente")
+@Table(name = "materia")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Docente {
+public class Materia {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Setter
-    private boolean laboratorio;
+    private String nome;
 
     @Setter
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "id")
-    private Utente utente;
+    private String descrizione;
 }

@@ -7,22 +7,22 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "utente")
+@Table(name = "docente_materia")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Utente {
+public class DocenteMateria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
-    private String nome;
+    @ManyToOne
+    @JoinColumn(name = "docente_id")
+    private Docente docente;
 
-    @Setter
-    private String cognome;
-
-    @Setter
-    private String email;
+    @ManyToOne
+    @JoinColumn(name = "materia_id")
+    private Materia materia;
 }
