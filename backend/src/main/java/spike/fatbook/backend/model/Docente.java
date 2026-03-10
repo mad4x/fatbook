@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 @Entity
 @Table(name = "docente")
 @Getter
-@Setter // Mettendo Setter qui, Lombok crea automaticamente setNome() e setCognome()
 @NoArgsConstructor
 @AllArgsConstructor
 public class Docente {
@@ -18,18 +17,14 @@ public class Docente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // --- ECCO I CAMPI MANCANTI! ---
-    @Column(name = "nome")
-    private String nome;
-
-    @Column(name = "cognome")
-    private String cognome;
-    // ------------------------------
-
+    @Setter
     private boolean laboratorio;
 
+    @Setter
     @OneToOne
     @JoinColumn(name = "utente_id", referencedColumnName = "id")
     private Utente utente;
 
 }
+// Docente funziona anche senza nome e cognome
+// Bastava cambiare i getter dentro il DataSeeder

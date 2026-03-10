@@ -6,39 +6,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Entity
-@Table(name = "assenza")
+@Table(name = "docente-ora_materializzata")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Assenza {
+public class Docente_OraMaterializzata {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
-    @Column(nullable = false)
-    private LocalDate data;
-
-    @Setter
-    private int ora;
-
-    @Setter
-    @Column(nullable = false)
-    private String motivazione;
-
-    @Setter
-    private boolean giornaliera;
-
-    @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
-    private UscitaDidattica uscitaDidattica;
-
-    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "docente_id")
     private Docente docente;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ora_materializzata_id")
+    private OraMaterializzata oraMaterializzata;
 }

@@ -7,25 +7,22 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "utente")
+@Table(name = "docente_materia")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Utente {
+public class Docente_Materia {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
-    @Column(nullable = false)
-    private String nome;
+    @ManyToOne(fetch =  FetchType.LAZY)
+    @JoinColumn(name = "docente_id")
+    private Docente docente;
 
-    @Setter
-    @Column(nullable = false)
-    private String cognome;
-
-    @Setter
-    @Column(nullable = false, unique = true)
-    private String email;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "materia_id")
+    private Materia materia;
 }

@@ -18,8 +18,10 @@ public class Materia {
     private Long id;
 
     @Setter
+    @Column(nullable = false)
     private String nome;
 
     @Setter
+    @Column(nullable = false)
     private String descrizione;
 }

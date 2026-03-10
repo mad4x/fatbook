@@ -18,8 +18,10 @@ public class Classe {
     private Long id;
 
     @Setter
+    @Column(nullable = false)
     private int anno;
 
     @Setter
+    @Column(nullable = false)
     private String sezione;
 }

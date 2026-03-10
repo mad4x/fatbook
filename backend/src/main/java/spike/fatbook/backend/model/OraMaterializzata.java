@@ -3,41 +3,45 @@ package spike.fatbook.backend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 import spike.fatbook.backend.enums.GiornoSettimana;
-import spike.fatbook.backend.enums.VersioneOrario;
+import spike.fatbook.backend.enums.StatoOra;
 
 @Entity
-@Table(name = "ora_canonica")
+@Table(name = "ora_materializzata")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class OraCanonica {
+public class OraMaterializzata {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
 
+    private LocalDate data;
     private int numeroOra;
 
+    //necessario?
     @Enumerated(EnumType.STRING)
     private GiornoSettimana giorno;
 
-    // riferisce a Materia per evitare duplicazione di stringhe
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "materia_id", nullable = false)
-    private Materia materia;
-
     @Enumerated(EnumType.STRING)
-    private VersioneOrario versione;
+    private StatoOra stato;
 
+    // opzionale: riferimento alla versione canonica (ora che era prevista)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "classe_id", nullable = false)
-    private Classe classe;
+    @JoinColumn(name = "ora_canonica_id")
+    private OraCanonica oraCanonica;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "aula_id")
     private Aula aula;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
 }

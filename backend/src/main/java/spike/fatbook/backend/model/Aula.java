@@ -18,9 +18,11 @@ public class Aula {
     private Long id;
 
     @Setter
+    @Column(nullable = false)
     private int piano;
 
     @Setter
+    @Column(nullable = false)
     private String numero;
 
     @Setter

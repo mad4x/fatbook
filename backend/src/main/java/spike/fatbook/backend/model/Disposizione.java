@@ -24,10 +24,14 @@ public class Disposizione {
     private Long id;
 
     @Setter
+    @Column(nullable = false)
     private LocalDate data;
 
     @Setter
     private int ora;
+
+    @Setter
+    private boolean giornaliera;
 
     @Setter
     @Enumerated(EnumType.STRING)

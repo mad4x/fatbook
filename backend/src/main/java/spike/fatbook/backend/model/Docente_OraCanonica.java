@@ -7,22 +7,22 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "docente_materia")
+@Table(name = "docente-ora_canonica")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocenteMateria {
+public class Docente_OraCanonica {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "docente_id")
     private Docente docente;
 
-    @ManyToOne
-    @JoinColumn(name = "materia_id")
-    private Materia materia;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ora_canonica_id")
+    private OraCanonica oraCanonica;
 }
