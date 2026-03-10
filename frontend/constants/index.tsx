@@ -5,19 +5,19 @@ export const SIDEBAR_ELEMENTS = [
   },
   {
     title: "Orario",
-    url: "/timetable"
+    url: "/orario"
   },
   {
     title: "Assenze",
-    url: "/absences"
+    url: "/assenze"
   },
   {
     title: "Avvisi",
-    url: "/announcements"
+    url: "/avvisi"
   },
   {
     title: "Impostazioni",
-    url: "/settings"
+    url: "/impostazioni"
   }
 
 ]
