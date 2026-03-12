@@ -2,6 +2,7 @@ package spike.fatbook.backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import spike.fatbook.backend.enums.RuoliDisponibili;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,8 @@ public class Ruolo {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String nome;
+    @Enumerated(EnumType.STRING)
+    private RuoliDisponibili ruolo;
 
     @OneToMany(mappedBy = "ruolo", fetch = FetchType.LAZY)
     @ToString.Exclude

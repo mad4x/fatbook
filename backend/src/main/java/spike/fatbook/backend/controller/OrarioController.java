@@ -14,21 +14,4 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*")
 public class OrarioController {
 
-    private final OraCanonicaRepository oraCanonicaRepository;
-
-    @GetMapping("/classe/{sezione}")
-    public List<OraCanonicaDTO> getOrarioByClasse(@PathVariable String sezione) {
-        return oraCanonicaRepository.findAll().stream()
-                .filter(ora -> ora.getClasse().getSezione().equalsIgnoreCase(sezione))
-                .map(ora -> new OraCanonicaDTO(
-                        ora.getGiorno().name(),
-                        ora.getNumeroOra(),
-                        ora.getMateria(),
-                        ora.getDocenteTeoria().getUtente().getCognome(),
-                        ora.getDocenteLaboratorio() != null ? ora.getDocenteLaboratorio().getUtente().getCognome() : "-",
-                        ora.getAula().getNumero(),
-                        ora.isAlternativa()
-                ))
-                .collect(Collectors.toList());
-    }
 }
