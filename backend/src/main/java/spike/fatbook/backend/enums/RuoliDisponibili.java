@@ -1,5 +1,5 @@
 package spike.fatbook.backend.enums;
 
 public enum RuoliDisponibili {
-    DOCENTE, VICEPRESIDE
+    ROLE_DOCENTE, ROLE_VICEPRESIDE
 }
