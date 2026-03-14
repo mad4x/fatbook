@@ -2,6 +2,7 @@ package spike.fatbook.backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import spike.fatbook.backend.enums.RuoliDisponibili;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +34,8 @@ public class Utente {
     @ToString.Exclude
     private List<UtenteRuolo> ruoli = new ArrayList<>();
 
-    public boolean hasRole(String ruolo) {
+    public boolean hasRole(RuoliDisponibili ruolo) {
         return ruoli.stream()
-                .anyMatch(r -> r.getRuolo().getNome().equals(ruolo));
+                .anyMatch(r -> r.getRuolo().getNomeRuolo().equals(ruolo));
     }
 }

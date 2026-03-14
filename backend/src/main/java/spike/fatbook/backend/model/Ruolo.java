@@ -23,7 +23,7 @@ public class Ruolo {
 
     @Column(nullable = false, unique = true)
     @Enumerated(EnumType.STRING)
-    private RuoliDisponibili ruolo;
+    private RuoliDisponibili nomeRuolo;
 
     @OneToMany(mappedBy = "ruolo", fetch = FetchType.LAZY)
     @ToString.Exclude
