@@ -21,7 +21,6 @@ public class DebugController {
     private final UtenteRepository utenteRepository;
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('DOCENTE')")
     public Object me(Authentication auth) {
         if (auth == null) return "No auth object found";
 

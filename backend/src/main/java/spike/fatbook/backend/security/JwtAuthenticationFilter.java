@@ -36,12 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 1. Cerca l'header "Authorization" nella richiesta HTTP
         final String authHeader = request.getHeader("Authorization");
+        System.out.println("1. HEADER RICEVUTO: " + authHeader); // DEBUG
         final String jwt;
         final String username;
 
         // Se l'header manca o non inizia con "Bearer ", ignoriamo il token e passiamo al filtro successivo.
         // (Magari è una richiesta a un endpoint pubblico come /api/auth/login)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("2. Niente token o formato errato. Passo la richiesta non autenticata."); // DEBUG
             filterChain.doFilter(request, response);
             return;
         }
@@ -51,6 +53,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 3. Chiede al JwtService di estrarre l'username (l'email) dal token
         username = jwtService.extractUsername(jwt);
+        System.out.println("3. EMAIL ESTRATTA DAL TOKEN: " + username); // DEBUG
+
 
         // 4. Se abbiamo trovato un username e l'utente NON è ancora autenticato in questo momento...
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -60,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 5. Controlla se il token è valido (non scaduto e appartiene davvero a questo utente)
             if (jwtService.isTokenValid(jwt, userDetails)) {
-
+                System.out.println("4. TOKEN VALIDO! Imposto l'autenticazione per: " + userDetails.getUsername()); // DEBUG
                 // Crea il "Pass VIP" ufficiale di Spring Security
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,

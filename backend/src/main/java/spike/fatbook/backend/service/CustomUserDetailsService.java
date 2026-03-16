@@ -1,5 +1,6 @@
 package spike.fatbook.backend.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.User;
@@ -21,6 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
+    @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Utente utente = utenteRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato con email: " + username));
