@@ -30,12 +30,16 @@ public class Utente {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @OneToMany(mappedBy = "utente", fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<UtenteRuolo> ruoli = new ArrayList<>();
+    @ElementCollection(fetch = FetchType.EAGER) // EAGER va benissimo qui, sono solo stringhe e ci servono sempre per il login!
+    @CollectionTable(
+            name = "utente_ruolo", // Il nome esatto della tabella nel DB
+            joinColumns = @JoinColumn(name = "utente_id") // La colonna della foreign key
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ruolo") // Il nome della colonna che conterrà la stringa (es. "DOCENTE")
+    private List<RuoliDisponibili> ruoli = new ArrayList<>();
 
     public boolean hasRole(RuoliDisponibili ruolo) {
-        return ruoli.stream()
-                .anyMatch(r -> r.getRuolo().getNomeRuolo().equals(ruolo));
+        return this.ruoli.contains(ruolo);
     }
 }

@@ -28,13 +28,13 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato con email: " + username));
 
         List<String> ruoli = utente.getRuoli().stream()
-                .map(ruolo -> ruolo.getRuolo().getNomeRuolo().name())
+                .map(Enum::name)
                 .toList();
 
         return User.builder()
                 .username(utente.getEmail())
                 .password("{noop}placeholder") // Meglio mettere questo per evitare errori del builder
-                .roles(ruoli.toArray(new String[0]))
+                .authorities(ruoli.toArray(new String[0]))
                 .build();
     }
 }
