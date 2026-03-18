@@ -41,7 +41,7 @@ const LoginPage = () => {
     e.preventDefault();
     setErrorMsg('');
     try {
-      const response = await fetch(`${getBaseUrl()}/api/auth/login`, {
+      const response = await fetch(`${getBaseUrl()}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
