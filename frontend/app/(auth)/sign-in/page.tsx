@@ -3,6 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {signIn} from "next-auth/react";
+import {getBaseUrl} from "@/lib/api-url";
+import {useState} from "react";
+import {useRouter} from "next/navigation";
 
 // Icona Google (SVG Standard inline per non dipendere da librerie esterne)
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -30,11 +33,43 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 
 const LoginPage = () => {
 
-  const handleSignIn = async () => {
+  const router = useRouter();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSignIn = async (e:React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErrorMsg('');
+    try {
+      const response = await fetch(`${getBaseUrl()}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        setErrorMsg("credenziali non valide");
+        return;
+      }
+
+      const data = await response.json();
+      if(data.token) {
+        localStorage.setItem('token', data.token);
+        router.replace('/dashboard');
+      }
+
+    } catch (error) {
+        console.error("errore di rete:", error);
+        setErrorMsg('impossibile connettersi al server.');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
     try {
       await signIn("google",{
         redirectTo: "/dashboard",
       });
+
     } catch (error) {
       console.error(error);
     }
@@ -57,8 +92,14 @@ const LoginPage = () => {
           </p>
         </div>
 
+        {errorMsg && (
+          <div className="p-3 text-sm text-red-500 bg-red-100 rounded-md text-center">
+            {errorMsg}
+          </div>
+        )}
+
         {/* Form di Login */}
-        <form className="mt-8 space-y-6">
+        <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
           <div className="space-y-4">
             {/* Campo Email - Label HTML standard + Input Shadcn */}
             <div>
@@ -70,11 +111,10 @@ const LoginPage = () => {
               </label>
               <Input
                 id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
-                required
-                placeholder="nome@esempio.com"
+                placeholder="cognome.nome@itisgrassi.edu.it"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
                 className="bg-gray-50 dark:bg-gray-800"
               />
             </div>
@@ -89,11 +129,10 @@ const LoginPage = () => {
               </label>
               <Input
                 id="password"
-                name="password"
                 type="password"
-                autoComplete="current-password"
-                required
-                placeholder="••••••••"
+                placeholder="********"
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
                 className="bg-gray-50 dark:bg-gray-800"
               />
             </div>
@@ -122,7 +161,7 @@ const LoginPage = () => {
           variant="outline"
           type="button"
           className="w-full mt-6"
-          onClick={handleSignIn}
+          onClick={handleGoogleSignIn}
         >
           <GoogleIcon className="mr-2 h-5 w-5" />
           Accedi con Google
