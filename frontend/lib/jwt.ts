@@ -5,6 +5,8 @@ export interface CustomJwtPayload {
     sub: string;
     iat: number;
     exp: number;
+    nome: string;
+    cognome: string;
     authorities?: string[]; // Potrebbe essere 'roles', lo scopriremo a breve!
 }
 
@@ -33,6 +35,25 @@ export const getRolesFromToken = (): string[] => {
     } catch (error) {
         console.error("Token non valido o malformato:", error);
         return [];
+    }
+};
+
+// Estrae i dati anagrafici per la Sidebar
+export const getUserInfo = (token: string|null) => {
+
+    // Valori di default se l'utente non è loggato
+    if (!token) return { nome: "Ospite", cognome: "", email: "" };
+
+    try {
+        const decoded = jwtDecode<CustomJwtPayload>(token);
+        return {
+            nome: decoded.nome || "Utente",
+            cognome: decoded.cognome || "",
+            email: decoded.sub || "" // Ricorda che l'email si nasconde dentro 'sub'!
+        };
+    } catch (error) {
+        console.error("Errore nella lettura dei dati utente:", error);
+        return { nome: "Ospite", cognome: "", email: "" };
     }
 };
 

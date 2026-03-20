@@ -6,18 +6,22 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import spike.fatbook.backend.model.Utente;
+import spike.fatbook.backend.repository.UtenteRepository;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
 
+    private final UtenteRepository utenteRepository;
     // Legge la chiave segreta da application.properties
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
@@ -26,6 +30,10 @@ public class JwtService {
     @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
 
+    public JwtService(UtenteRepository utenteRepository) {
+        this.utenteRepository = utenteRepository;
+    }
+
     // 1. Estrae l'email (che in Spring si chiama Username) dal token
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -33,7 +41,21 @@ public class JwtService {
 
     // 2. Genera un token nuovo per un utente
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+
+        List<String> authorities = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        Utente utente = utenteRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato"));
+        String nome = utente.getNome();
+        String cognome = utente.getCognome();
+
+        extraClaims.put("authorities", authorities);
+        extraClaims.put("nome", nome);
+        extraClaims.put("cognome", cognome);
+        return generateToken(extraClaims, userDetails);
     }
 
     // 3. Genera un token permettendo di inserire dati extra (es. ruoli custom)
