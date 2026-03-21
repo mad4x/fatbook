@@ -25,10 +25,6 @@ public class OraMaterializzata {
     private LocalDate data;
     private int numeroOra;
 
-    //necessario?
-    @Enumerated(EnumType.STRING)
-    private GiornoSettimana giorno;
-
     @Enumerated(EnumType.STRING)
     private StatoOra stato;
 
