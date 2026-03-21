@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Docente_OraCanonica {
+public class DocenteOraCanonica {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

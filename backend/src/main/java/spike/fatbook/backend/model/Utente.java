@@ -30,6 +30,7 @@ public class Utente {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Setter
     @ElementCollection(fetch = FetchType.EAGER) // EAGER va benissimo qui, sono solo stringhe e ci servono sempre per il login!
     @CollectionTable(
             name = "utente_ruolo", // Il nome esatto della tabella nel DB
