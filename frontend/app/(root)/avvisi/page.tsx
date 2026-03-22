@@ -76,6 +76,9 @@ export default function AvvisiPage() {
   const [selectedViewAvviso, setSelectedViewAvviso] = useState<Avviso | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [editFormData, setEditFormData] = useState<FormData>(initialFormData);
+  const [newAttachmentFiles, setNewAttachmentFiles] = useState<File[]>([]);
+  const [editAttachmentFiles, setEditAttachmentFiles] = useState<File[]>([]);
+  const [editEmbeddedAttachments, setEditEmbeddedAttachments] = useState<string[]>([]);
 
   const canManageAvvisi = hasVicepresidenzaRole(userRoles);
 
@@ -98,6 +101,40 @@ export default function AvvisiPage() {
     }
 
     return [];
+  };
+
+  const isDataAttachment = (value: string) => value.trim().toLowerCase().startsWith('data:');
+
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+          return;
+        }
+        reject(new Error('Impossibile leggere il file selezionato'));
+      };
+      reader.onerror = () => reject(new Error('Errore durante la lettura del file'));
+      reader.readAsDataURL(file);
+    });
+
+  const toDataUrlList = async (files: File[]): Promise<string[]> => {
+    if (files.length === 0) {
+      return [];
+    }
+
+    return Promise.all(files.map((file) => fileToDataUrl(file)));
+  };
+
+  const getAttachmentLabel = (allegato: string, index: number) => {
+    if (isDataAttachment(allegato)) {
+      const mimeMatch = allegato.match(/^data:([^;]+);/i);
+      const mime = mimeMatch?.[1] ?? 'file';
+      return `Allegato file ${index + 1} (${mime})`;
+    }
+
+    return allegato;
   };
 
   const normalizeAvviso = (raw: any): Avviso => {
@@ -126,6 +163,9 @@ export default function AvvisiPage() {
     if (!trimmed) {
       return '';
     }
+    if (/^data:/i.test(trimmed) || /^blob:/i.test(trimmed)) {
+      return trimmed;
+    }
     if (/^https?:\/\//i.test(trimmed)) {
       return trimmed;
     }
@@ -135,16 +175,25 @@ export default function AvvisiPage() {
     return `https://${trimmed}`;
   };
 
-  const buildPayload = (data: FormData): AvvisoWritePayload => ({
-    titolo: data.titolo.trim(),
-    contenuto: data.contenuto.trim(),
-    autore: data.autore.trim(),
-    categoria: data.categoria.trim() || 'Generale',
-    priorita: data.priorita,
-    stato: data.stato,
-    tags: parseMultiValue(data.tagsInput),
-    allegati: parseMultiValue(data.allegatiInput)
-  });
+  const buildPayload = async (
+    data: FormData,
+    selectedFiles: File[],
+    preservedAttachments: string[] = []
+  ): Promise<AvvisoWritePayload> => {
+    const links = parseMultiValue(data.allegatiInput);
+    const uploadedFiles = await toDataUrlList(selectedFiles);
+
+    return {
+      titolo: data.titolo.trim(),
+      contenuto: data.contenuto.trim(),
+      autore: data.autore.trim(),
+      categoria: data.categoria.trim() || 'Generale',
+      priorita: data.priorita,
+      stato: data.stato,
+      tags: parseMultiValue(data.tagsInput),
+      allegati: [...preservedAttachments, ...links, ...uploadedFiles]
+    };
+  };
 
   const getFriendlyError = (err: unknown) => {
     if (err instanceof TypeError) {
@@ -204,7 +253,7 @@ export default function AvvisiPage() {
       setError(null);
       setNetworkError(null);
 
-      const payload = buildPayload(formData);
+      const payload = await buildPayload(formData, newAttachmentFiles);
       const response = await fetchWithAuth(`${getBaseUrl()}/avvisi`, {
         method: 'POST',
         headers: {
@@ -222,8 +271,7 @@ export default function AvvisiPage() {
 
       const nuovoAvviso: Avviso = normalizeAvviso(await response.json());
       setAvvisi((prev) => [nuovoAvviso, ...prev]);
-      setIsModalOpen(false);
-      setFormData(initialFormData);
+      chiudiCreazioneAvviso();
     } catch (err) {
       console.error('Errore creazione avviso:', err);
       if (err instanceof Error && err.message === 'FORBIDDEN_CREATE_AVVISO') {
@@ -237,6 +285,9 @@ export default function AvvisiPage() {
   };
 
   const apriModificaAvviso = (avviso: Avviso) => {
+    const embeddedAttachments = (avviso.allegati || []).filter((item) => isDataAttachment(item));
+    const linkAttachments = (avviso.allegati || []).filter((item) => !isDataAttachment(item));
+
     setSelectedAvviso(avviso);
     setEditFormData({
       titolo: avviso.titolo,
@@ -246,14 +297,22 @@ export default function AvvisiPage() {
       priorita: avviso.priorita,
       stato: avviso.stato,
       tagsInput: (avviso.tags || []).join(', '),
-      allegatiInput: (avviso.allegati || []).join(', ')
+      allegatiInput: linkAttachments.join(', ')
     });
+    setEditEmbeddedAttachments(embeddedAttachments);
+    setEditAttachmentFiles([]);
     setIsEditModalOpen(true);
   };
 
   const chiudiModificaAvviso = () => {
     setIsEditModalOpen(false);
     setSelectedAvviso(null);
+    setEditAttachmentFiles([]);
+    setEditEmbeddedAttachments([]);
+  };
+
+  const rimuoviFileAllegatoEsistente = (indexToRemove: number) => {
+    setEditEmbeddedAttachments((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const apriDettaglioAvviso = (avviso: Avviso) => {
@@ -264,6 +323,12 @@ export default function AvvisiPage() {
   const chiudiDettaglioAvviso = () => {
     setIsViewModalOpen(false);
     setSelectedViewAvviso(null);
+  };
+
+  const chiudiCreazioneAvviso = () => {
+    setIsModalOpen(false);
+    setFormData(initialFormData);
+    setNewAttachmentFiles([]);
   };
 
   const salvaModificaAvviso = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -278,7 +343,7 @@ export default function AvvisiPage() {
       setError(null);
       setNetworkError(null);
 
-      const payload = buildPayload(editFormData);
+      const payload = await buildPayload(editFormData, editAttachmentFiles, editEmbeddedAttachments);
       const response = await fetchWithAuth(`${getBaseUrl()}/avvisi/${selectedAvviso.id}`, {
         method: 'PUT',
         headers: {
@@ -465,7 +530,7 @@ export default function AvvisiPage() {
                     <div className="mt-3">
                       <p className="text-xs font-semibold text-gray-600 mb-1">Allegati</p>
                       <ul className="space-y-1">
-                        {avviso.allegati.map((allegato) => (
+                        {avviso.allegati.map((allegato, index) => (
                           <li key={`${avviso.id}-${allegato}`}>
                             <a
                               href={toOpenableUrl(allegato)}
@@ -473,7 +538,7 @@ export default function AvvisiPage() {
                               rel="noreferrer"
                               className="text-xs text-blue-600 hover:text-blue-700 underline break-all"
                             >
-                              {allegato}
+                              {getAttachmentLabel(allegato, index)}
                             </a>
                           </li>
                         ))}
@@ -526,7 +591,7 @@ export default function AvvisiPage() {
 
       {isViewModalOpen && selectedViewAvviso && (
         <div className="fixed inset-0 backdrop-blur-sm bg-gray-500/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl border border-gray-100 max-h-[85vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-2xl border border-gray-100 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">Dettaglio Avviso</h2>
               <button onClick={chiudiDettaglioAvviso} className="text-gray-400 hover:text-gray-600 text-2xl">
@@ -560,7 +625,7 @@ export default function AvvisiPage() {
                 <div className="pt-2 border-t">
                   <p className="text-sm font-semibold text-gray-700 mb-2">Allegati e link</p>
                   <ul className="space-y-1">
-                    {selectedViewAvviso.allegati.map((allegato) => (
+                    {selectedViewAvviso.allegati.map((allegato, index) => (
                       <li key={`${selectedViewAvviso.id}-view-file-${allegato}`}>
                         <a
                           href={toOpenableUrl(allegato)}
@@ -568,7 +633,7 @@ export default function AvvisiPage() {
                           rel="noreferrer"
                           className="text-sm text-blue-600 hover:text-blue-700 underline break-all"
                         >
-                          {allegato}
+                          {getAttachmentLabel(allegato, index)}
                         </a>
                       </li>
                     ))}
@@ -601,10 +666,10 @@ export default function AvvisiPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 backdrop-blur-sm bg-gray-500/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-100">
+          <div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-2xl border border-gray-100 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">Nuova Comunicazione</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl">
+              <button onClick={chiudiCreazioneAvviso} className="text-gray-400 hover:text-gray-600 text-2xl">
                 ×
               </button>
             </div>
@@ -693,6 +758,20 @@ export default function AvvisiPage() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Carica file allegati (PDF, immagini, documenti)</label>
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  onChange={(e) => setNewAttachmentFiles(Array.from(e.target.files || []))}
+                />
+                {newAttachmentFiles.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">{newAttachmentFiles.length} file selezionati</p>
+                )}
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Testo Avviso</label>
                 <textarea
                   required
@@ -707,7 +786,7 @@ export default function AvvisiPage() {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={chiudiCreazioneAvviso}
                   className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition"
                 >
                   Annulla
@@ -727,7 +806,7 @@ export default function AvvisiPage() {
 
       {isEditModalOpen && selectedAvviso && canManageAvvisi && (
         <div className="fixed inset-0 backdrop-blur-sm bg-gray-500/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-xl border border-gray-100">
+          <div className="bg-white rounded-xl shadow-2xl p-5 w-full max-w-2xl border border-gray-100 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">Modifica Comunicazione</h2>
               <button onClick={chiudiModificaAvviso} className="text-gray-400 hover:text-gray-600 text-2xl">
@@ -811,6 +890,44 @@ export default function AvvisiPage() {
                   value={editFormData.allegatiInput}
                   onChange={(e) => setEditFormData({ ...editFormData, allegatiInput: e.target.value })}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Aggiungi nuovi file allegati</label>
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  onChange={(e) => setEditAttachmentFiles(Array.from(e.target.files || []))}
+                />
+
+                {editEmbeddedAttachments.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-gray-600">File già allegati ({editEmbeddedAttachments.length})</p>
+                    <ul className="space-y-1">
+                      {editEmbeddedAttachments.map((allegato, index) => (
+                        <li
+                          key={`${selectedAvviso?.id}-existing-file-${index}`}
+                          className="flex items-center justify-between gap-2 text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1"
+                        >
+                          <span className="text-gray-700 truncate">{getAttachmentLabel(allegato, index)}</span>
+                          <button
+                            type="button"
+                            onClick={() => rimuoviFileAllegatoEsistente(index)}
+                            className="text-red-600 hover:text-red-700 font-medium whitespace-nowrap"
+                          >
+                            Rimuovi
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {editAttachmentFiles.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">Nuovi file selezionati: {editAttachmentFiles.length}</p>
+                )}
               </div>
 
               <div>

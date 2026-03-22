@@ -11,8 +11,10 @@ import spike.fatbook.backend.service.AvvisoService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/avvisi")
@@ -121,15 +123,15 @@ public class AvvisoController {
                 avviso.getPriorita() == null ? PrioritaAvviso.NORMALE : avviso.getPriorita(),
                 avviso.getStato() == null ? StatoAvviso.PUBBLICATO : avviso.getStato(),
                 avviso.getCategoria(),
-                parseCsv(avviso.getTagsCsv()),
-                parseCsv(avviso.getAllegatiCsv()),
+                parseTagsCsv(avviso.getTagsCsv()),
+                parseAllegati(avviso.getAllegatiCsv()),
                 avviso.getCreatoDa(),
                 avviso.getAggiornatoDa(),
                 avviso.getDataAggiornamento()
         );
     }
 
-    private List<String> parseCsv(String csv) {
+    private List<String> parseTagsCsv(String csv) {
         if (csv == null || csv.isBlank()) {
             return List.of();
         }
@@ -138,6 +140,45 @@ public class AvvisoController {
                 .map(String::trim)
                 .filter(token -> !token.isBlank())
                 .toList();
+    }
+
+    private List<String> parseAllegati(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+
+        String trimmed = raw.trim();
+
+        if (trimmed.contains("\n")) {
+            return Arrays.stream(trimmed.split("\\R"))
+                    .map(String::trim)
+                    .filter(token -> !token.isBlank())
+                    .toList();
+        }
+
+        List<String> decoded = Arrays.stream(trimmed.split(","))
+                .map(String::trim)
+                .filter(token -> !token.isBlank())
+                .map(this::decodeBase64OrRaw)
+                .filter(token -> !token.isBlank())
+                .toList();
+
+        if (!decoded.isEmpty()) {
+            return decoded;
+        }
+
+        return Arrays.stream(trimmed.split(","))
+                .map(String::trim)
+                .filter(token -> !token.isBlank())
+                .toList();
+    }
+
+    private String decodeBase64OrRaw(String token) {
+        try {
+            return new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8).trim();
+        } catch (IllegalArgumentException ignored) {
+            return token;
+        }
     }
 
     public record AvvisoWriteRequest(

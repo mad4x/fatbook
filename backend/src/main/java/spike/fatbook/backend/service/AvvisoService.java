@@ -10,6 +10,8 @@ import spike.fatbook.backend.model.Avviso;
 import spike.fatbook.backend.repository.AvvisoRepository;
 
 import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +62,7 @@ public class AvvisoService {
         avviso.setStato(stato == null ? StatoAvviso.PUBBLICATO : stato);
         avviso.setCategoria(normalizeCategoria(categoria));
         avviso.setTagsCsv(toCsv(tags));
-        avviso.setAllegatiCsv(toCsv(allegati));
+        avviso.setAllegatiCsv(toAllegatiStorage(allegati));
         avviso.setData(LocalDate.now());
         avviso.setLetto(false);
         avviso.setDescrizione(contenuto);
@@ -94,7 +96,7 @@ public class AvvisoService {
         avviso.setStato(stato == null ? StatoAvviso.PUBBLICATO : stato);
         avviso.setCategoria(normalizeCategoria(categoria));
         avviso.setTagsCsv(toCsv(tags));
-        avviso.setAllegatiCsv(toCsv(allegati));
+        avviso.setAllegatiCsv(toAllegatiStorage(allegati));
         if (avviso.getData() == null) {
             avviso.setData(LocalDate.now());
         }
@@ -130,6 +132,20 @@ public class AvvisoService {
                 .filter(value -> !value.isBlank())
                 .distinct()
                 .collect(Collectors.joining(", "));
+    }
+
+    private String toAllegatiStorage(List<String> allegati) {
+        List<String> normalized = allegati == null
+                ? List.of()
+                : allegati.stream()
+                .map(value -> value == null ? "" : value.trim())
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .toList();
+
+        return normalized.stream()
+                .map(value -> Base64.getUrlEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8)))
+                .collect(Collectors.joining(","));
     }
 
     private String currentActor() {
