@@ -1,16 +1,20 @@
 package spike.fatbook.backend.controller;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import spike.fatbook.backend.dto.NuovoDocenteDTO;
+import spike.fatbook.backend.dto.DocenteRequestDTO;
+import spike.fatbook.backend.dto.DocenteResponseDTO;
 import spike.fatbook.backend.service.DocenteService;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/vicepreside") // L'URL base per le API dei docenti lato vicepreside
+@RequestMapping("/api/vicepresidenza") // L'URL base per le API dei docenti lato vicepreside
 @RequiredArgsConstructor
 public class VicepresideController {
 
@@ -18,7 +22,7 @@ public class VicepresideController {
 
     @PostMapping("docente")
     @PreAuthorize("hasRole('VICEPRESIDE')")
-    public ResponseEntity<String> creaDocente(@RequestBody NuovoDocenteDTO dto) {
+    public ResponseEntity<String> creaDocente(@RequestBody DocenteRequestDTO dto) {
         try {
             // Passiamo il "pacchetto" al Service che farà tutto il lavoro sporco
             docenteService.creaNuovoDocente(dto);

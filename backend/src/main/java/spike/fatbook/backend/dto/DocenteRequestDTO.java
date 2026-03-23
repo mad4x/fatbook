@@ -4,7 +4,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class NuovoDocenteDTO {
+public class DocenteRequestDTO {
 
     private String nome;
     private String cognome;
