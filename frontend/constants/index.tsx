@@ -1,3 +1,5 @@
+import {Users} from "lucide-react";
+
 export const SIDEBAR_ELEMENTS = [
   {
     title: "Dashboard",
@@ -20,4 +22,13 @@ export const SIDEBAR_ELEMENTS = [
     url: "/impostazioni"
   }
 
+];
+
+export const PANNELLO_VICEPRESIDE_ELEMENTS = [
+    {
+        "href": "/vicepresidenza/docenti",
+        "title": "Gestione Docenti",
+        "description": "Aggiungi o rimuovi professori",
+        "icon": <Users size={32} />
+    }
 ]

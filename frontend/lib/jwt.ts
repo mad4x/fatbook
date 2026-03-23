@@ -77,6 +77,14 @@ export const fetchWithAuth =
         headers.set("Authorization", `Bearer ${token}`);
     }
 
+    if (
+        options.body &&
+        !(options.body instanceof FormData) &&
+        !headers.has("Content-Type")
+    ) {
+        headers.set("Content-Type", "application/json");
+    }
+
     // Lanciamo la chiamata fetch originale "potenziata"
     const response = await fetch(url, {
         ...options,
