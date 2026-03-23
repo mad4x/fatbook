@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
 
 import {
     Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -14,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button";
 
 import { SIDEBAR_ELEMENTS } from "@/constants";
-import { isVicepreside, getToken, CustomJwtPayload } from "@/lib/jwt";
+import {isVicepreside, getToken, CustomJwtPayload, getUserInfo} from "@/lib/jwt";
 
 const AppSidebar = () => {
     const router = useRouter();
@@ -44,15 +43,7 @@ const AppSidebar = () => {
     const isLoggedIn = !!token; // Trasforma il token in un booleano (true se c'è, false se è null)
     const vicepreside = isVicepreside();
 
-    let userEmail = "";
-    if (token) {
-        try {
-            const decoded = jwtDecode<CustomJwtPayload>(token);
-            userEmail = decoded.sub || "";
-        } catch (error) {
-            console.error("Errore nella lettura del token", error);
-        }
-    }
+    const userInfo = getUserInfo(token);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -100,21 +91,29 @@ const AppSidebar = () => {
                         <Button className="w-full">Accedi</Button>
                     </Link>
                 ) : (
-                    <div className="flex flex-col gap-3 items-center w-full">
-                        <div className="flex flex-row gap-2 items-center w-full px-2">
-                            <Avatar>
-                                {/* Per ora non abbiamo l'immagine, usiamo il fallback */}
-                                <AvatarFallback className="bg-blue-100 text-blue-600">
-                                    {userEmail.substring(0, 2).toUpperCase()}
+                    <div className="flex flex-col gap-4 w-full p-2">
+                        <div className="flex flex-row items-center gap-3 overflow-hidden">
+                            <Avatar className="h-10 w-10">
+                                <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
+                                    {userInfo.nome?.substring(0, 1).toUpperCase()}
+                                    {userInfo.cognome?.substring(0, 1).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            {/* Mostriamo l'email presa dal JWT in attesa del Nome vero */}
-                            <p className="text-sm truncate w-full">{userEmail}</p>
+
+                            <div className="flex flex-col items-start overflow-hidden">
+                                <p className="text-sm font-semibold truncate w-full">
+                                    {userInfo.nome} {userInfo.cognome}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate w-full">
+                                    {userInfo.email}
+                                </p>
+                            </div>
                         </div>
 
+                        {/* Pulsante di Logout */}
                         <Button
                             className="w-full"
-                            variant="destructive" // Magari rosso per il logout?
+                            variant="destructive"
                             onClick={handleLogout}
                         >
                             Disconnettiti
