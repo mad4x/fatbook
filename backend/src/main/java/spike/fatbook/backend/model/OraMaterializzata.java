@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-import spike.fatbook.backend.enums.GiornoSettimana;
 import spike.fatbook.backend.enums.StatoOra;
 
 @Entity
