@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import Modal from '@/components/Modal';
 import { getBaseUrl } from "@/lib/api-url";
 import { fetchWithAuth } from "@/lib/jwt";
@@ -102,7 +102,7 @@ const GestioneDocenti = () => {
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Docenti</h1>
-                    <p className="text-gray-500 mt-1">Gestisci il corpo docenti dell'istituto</p>
+                    <p className="text-gray-500 mt-1">Gestisci il corpo docenti dell&apos;istituto</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}

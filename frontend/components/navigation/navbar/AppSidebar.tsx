@@ -9,11 +9,11 @@ import {
     SidebarGroupContent, SidebarHeader, SidebarMenu,
     SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button";
 
 import { SIDEBAR_ELEMENTS } from "@/constants";
-import {isVicepreside, getToken, CustomJwtPayload, getUserInfo} from "@/lib/jwt";
+import {isVicepreside, getToken, getUserInfo} from "@/lib/jwt";
 
 const AppSidebar = () => {
     const router = useRouter();

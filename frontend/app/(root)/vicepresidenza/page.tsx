@@ -9,7 +9,7 @@ const Vicepresidenza = () => {
             {/* Un bel titolo per contestualizzare la dashboard */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800">Pannello Vicepresidenza</h1>
-                <p className="text-gray-500 mt-2">Seleziona un'area di gestione per iniziare</p>
+                <p className="text-gray-500 mt-2">Seleziona un&apos;area di gestione per iniziare</p>
             </div>
 
             {/* Qui c'è la magia di Tailwind:

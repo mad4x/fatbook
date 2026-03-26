@@ -22,7 +22,7 @@ const TabellaDocenti = ({ docenti }: TabellaDocentiProps)=> {
                 {docenti.length === 0 ? (
                     <tr>
                         <td colSpan={4} className="p-8 text-center text-gray-500">
-                            Nessun docente registrato. Clicca su "Nuovo Docente" per iniziare.
+                            Nessun docente registrato. Clicca su &quot;Nuovo Docente&quot; per iniziare.
                         </td>
                     </tr>
                 ) : (

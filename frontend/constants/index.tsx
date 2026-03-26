@@ -1,4 +1,4 @@
-import {ArrowLeftRight, ClipboardPen, Files, Users} from "lucide-react";
+import {ArrowLeftRight, Files, Users} from "lucide-react";
 
 export const SIDEBAR_ELEMENTS = [
   {
