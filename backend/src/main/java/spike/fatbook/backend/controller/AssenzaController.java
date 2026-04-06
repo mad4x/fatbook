@@ -33,7 +33,7 @@ public class AssenzaController {
 
     @PostMapping
     public ResponseEntity<?> creaAssenza(@RequestBody AssenzaRequestDTO dto, Principal principal) {
-        // principal.getName() restituisce il "subject" del JWT, che di solito è l'email!
+        // principal.getName() restituisce il "subject" del JWT, che di solito è l'email
         String emailVicepreside = principal.getName();
 
         AssenzaResponseDTO responseDTO = assenzaService.registraAssenza(dto, emailVicepreside);
