@@ -20,4 +20,22 @@ public interface DocenteOraCanonicaRepository extends JpaRepository<DocenteOraCa
     WHERE d.oraCanonica.id IN :oraIds
     """)
     List<DocenteOraCanonica> findByOraCanonicaIdsWithDocente(@Param("oraIds") List<Long> oraIds);
+
+    @Query("""
+    SELECT d
+    FROM DocenteOraCanonica d
+    JOIN FETCH d.docente doc
+    JOIN FETCH doc.utente
+    WHERE d.oraCanonica.id = :oraId
+    """)
+    List<DocenteOraCanonica> findByOraCanonicaIdWithDocente(@Param("oraId") Long oraId);
+
+    void deleteByOraCanonicaId(Long oraId);
+
+    boolean existsByDocenteIdAndOraCanonicaGiornoAndOraCanonicaNumeroOraAndOraCanonicaClasseIdNot(
+        Long docenteId,
+        spike.fatbook.backend.enums.GiornoSettimana giorno,
+        int numeroOra,
+        Long classeId
+    );
 }
