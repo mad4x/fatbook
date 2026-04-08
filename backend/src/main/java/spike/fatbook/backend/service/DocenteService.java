@@ -28,27 +28,28 @@ public class DocenteService {
     @Transactional
     public void creaNuovoDocente(DocenteRequestDTO dto) {
 
-        // 1. Controllo email
-        if (utenteRepository.findByEmail(dto.getEmail()).isPresent()) {
+        // 1. Controllo email - Uso dto.email() invece di dto.getEmail()
+        if (utenteRepository.findByEmail(dto.email()).isPresent()) {
             throw new IllegalArgumentException("Esiste già un utente con questa email!");
         }
 
         // 2. Creazione Utente
         Utente nuovoUtente = new Utente();
-        nuovoUtente.setNome(dto.getNome());
-        nuovoUtente.setCognome(dto.getCognome());
-        nuovoUtente.setEmail(dto.getEmail());
+        nuovoUtente.setNome(dto.nome());
+        nuovoUtente.setCognome(dto.cognome());
+        nuovoUtente.setEmail(dto.email());
         nuovoUtente.setRuoli(List.of(RuoliDisponibili.ROLE_DOCENTE));
         utenteRepository.save(nuovoUtente);
 
         // 3. Creazione Docente (senza materie per ora)
         Docente nuovoDocente = new Docente();
         nuovoDocente.setUtente(nuovoUtente);
-        nuovoDocente.setLaboratorio(dto.isLaboratorio());
+        // Assumo che il campo nel record si chiami "laboratorio" o "isLaboratorio"
+        nuovoDocente.setLaboratorio(dto.laboratorio());
 
         // 4. Creiamo i legami con le materie (DocenteMateria)
-        if (dto.getMaterieIds() != null && !dto.getMaterieIds().isEmpty()) {
-            List<Materia> materieSelezionate = materiaRepository.findAllById(dto.getMaterieIds());
+        if (dto.materieIds() != null && !dto.materieIds().isEmpty()) {
+            List<Materia> materieSelezionate = materiaRepository.findAllById(dto.materieIds());
 
             for (Materia materia : materieSelezionate) {
                 DocenteMateria legame = new DocenteMateria();
@@ -59,34 +60,31 @@ public class DocenteService {
             }
         }
 
-        // 5. Salviamo il Docente (Grazie a CascadeType.ALL, Spring salverà in automatico anche tutti i record in DocenteMateria!)
+        // 5. Salviamo il Docente
         docenteRepository.save(nuovoDocente);
     }
 
     public List<DocenteResponseDTO> getAllDocenti() {
         return docenteRepository.findAll().stream()
                 .map(docente -> {
-                    DocenteResponseDTO dto = new DocenteResponseDTO();
-                    // I dati anagrafici li prendiamo dall'Utente collegato
-                    dto.setId(docente.getId());
-                    dto.setNome(docente.getUtente().getNome());
-                    dto.setCognome(docente.getUtente().getCognome());
-                    dto.setEmail(docente.getUtente().getEmail());
-
-                    // I dati specifici li prendiamo dal Docente
-                    dto.setLaboratorio(docente.isLaboratorio());
-
-                    // Estraiamo solo i nomi delle materie dai "ponti" DocenteMateria
+                    // 1. Prepariamo la lista delle materie
                     List<String> nomiMaterie = docente.getDocenze().stream()
                             .map(legame -> legame.getMateria().getNome())
                             .toList();
-                    dto.setMaterie(nomiMaterie);
 
-                    return dto;
+                    // 2. Costruiamo il Record passando tutti i parametri in un colpo solo!
+                    // L'ordine dei parametri DEVE rispettare quello in cui li hai scritti nel file DocenteResponseDTO.java
+                    return new DocenteResponseDTO(
+                            docente.getId(),
+                            docente.getUtente().getNome(),
+                            docente.getUtente().getCognome(),
+                            docente.getUtente().getEmail(),
+                            docente.isLaboratorio(), // O getLaboratorio() a seconda dell'entità
+                            nomiMaterie
+                    );
                 })
                 .toList();
     }
-
 
     @Transactional
     public void deleteDocente(Long id) {

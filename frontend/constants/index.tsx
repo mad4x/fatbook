@@ -63,7 +63,7 @@ export const PANNELLO_VICEPRESIDE_ELEMENTS = [
     },
     {
         "href": "/vicepresidenza/assenze",
-        "title": "Storico assenze",
+        "title": "Gestione assenze",
         "description": "Traccia e gestisci le assenze",
         "icon": <Users size={32} />
     }

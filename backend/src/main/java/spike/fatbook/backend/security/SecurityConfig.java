@@ -47,10 +47,11 @@ public class SecurityConfig {
                 // 2. Regole di accesso
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Lascia passare tutti per il login/registrazione
-                    .requestMatchers(HttpMethod.GET, "/api/avvisi/**").hasAnyRole("DOCENTE", "VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/api/avvisi/**").hasAnyRole("VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
-                    .requestMatchers(HttpMethod.PUT, "/api/avvisi/**").hasAnyRole("VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
-                    .requestMatchers(HttpMethod.DELETE, "/api/avvisi/**").hasAnyRole("VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/avvisi/**").hasAnyRole("DOCENTE", "VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/avvisi/**").hasAnyRole("VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/avvisi/**").hasAnyRole("VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/avvisi/**").hasAnyRole("VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated() // Richiede il token JWT per QUALSIASI altra rotta (es. /api/me)
                 )
 
