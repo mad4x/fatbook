@@ -213,7 +213,7 @@ const GestioneAssenze = () => {
                                     <td className="py-4 px-6 text-right">
                                         <button
                                             onClick={() => { setAssenzaDaEliminare(assenza.id); setDeleteError(""); }}
-                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors inline-flex items-center justify-center"
+                                            className="p-2 text-gray-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors inline-flex items-center justify-center"
                                             title="Elimina assenza"
                                         >
                                             <Trash2 size={18} />
@@ -237,13 +237,13 @@ const GestioneAssenze = () => {
                     <div className="space-y-5">
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Docente Assente</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Docente Assente</label>
                             <select
                                 name="docenteId"
                                 required
                                 value={formData.docenteId}
                                 onChange={handleChange}
-                                className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white"
+                                className="w-full border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100"
                             >
                                 <option value="" disabled>-- Seleziona un docente --</option>
                                 {docenti.map(docente => (
@@ -256,14 +256,14 @@ const GestioneAssenze = () => {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Data</label>
                                 <input
                                     type="date"
                                     name="data"
                                     required
                                     value={formData.data}
                                     onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                                    className="w-full border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100"
                                 />
                             </div>
 
@@ -276,15 +276,15 @@ const GestioneAssenze = () => {
                                         onChange={handleChange}
                                         className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                                     />
-                                    <span className="font-medium text-gray-800">Intera giornata</span>
+                                    <span className="font-medium text-gray-800 dark:text-slate-100">Intera giornata</span>
                                 </label>
                             </div>
                         </div>
 
                         {/* Appare dinamicamente solo se togli la spunta a "Intera giornata" */}
                         {!formData.giornaliera && (
-                            <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                                <label className="block text-sm font-medium text-amber-900 mb-1">Specifica l&apos;ora di assenza</label>
+                            <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/30 rounded-xl">
+                                <label className="block text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">Specifica l&apos;ora di assenza</label>
                                 <input
                                     type="number"
                                     name="ora"
@@ -294,33 +294,33 @@ const GestioneAssenze = () => {
                                     value={formData.ora}
                                     onChange={handleChange}
                                     placeholder="Es: 1, 2, 3..."
-                                    className="w-full border border-amber-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white"
+                                    className="w-full border border-amber-200 dark:border-amber-500/40 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100"
                                 />
                             </div>
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Motivazione (opzionale)</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Motivazione (opzionale)</label>
                             <input
                                 type="text"
                                 name="motivazione"
                                 value={formData.motivazione}
                                 onChange={handleChange}
                                 placeholder="Es: Febbre, Permesso retribuito..."
-                                className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                                className="w-full border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100"
                             />
                         </div>
                     </div>
 
                     {error && (
-                        <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                        <div className="mt-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-200 text-sm rounded-lg border border-red-100 dark:border-red-500/30">
                             {error}
                         </div>
                     )}
 
                     <div className="flex justify-end gap-3 mt-8">
                         <button type="button" onClick={() => setIsModalOpen(false)}
-                                className="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition-colors">
+                                className="px-5 py-2.5 text-gray-600 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors">
                             Annulla
                         </button>
                         <button type="submit"

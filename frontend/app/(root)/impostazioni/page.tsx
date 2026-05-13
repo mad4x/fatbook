@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { getRolesFromToken, hasVicepresidenzaRole } from "@/lib/jwt";
 
 type ThemeMode = "light" | "dark" | "system";
 
@@ -31,6 +32,9 @@ const DEFAULT_SETTINGS: SettingsState = {
 const ImpostazioniPage = () => {
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
   const [hydrated, setHydrated] = useState(false);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+
+  const isVicepreside = hasVicepresidenzaRole(userRoles);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -45,6 +49,10 @@ const ImpostazioniPage = () => {
       window.localStorage.removeItem(STORAGE_KEY);
     }
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    setUserRoles(getRolesFromToken());
   }, []);
 
   useEffect(() => {
@@ -136,7 +144,9 @@ const ImpostazioniPage = () => {
               <label className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
                 <div>
                   <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Tabelle compatte</p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400">Riduce spaziature nelle griglie.</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    Riduce l&apos;altezza delle righe in orario, assenze e altre tabelle.
+                  </p>
                 </div>
                 <input
                   type="checkbox"
@@ -189,72 +199,76 @@ const ImpostazioniPage = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Impostazioni Vicepreside</h2>
-            <p className="text-sm text-gray-500 dark:text-slate-400">Controlli operativi per la gestione d'istituto.</p>
-            <div className="mt-4 space-y-3">
-              <label className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Digest settimanale</p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400">Riepilogo assenze, orari e avvisi.</p>
+          {isVicepreside && (
+            <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Impostazioni Vicepreside</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Controlli operativi per la gestione d'istituto.</p>
+              <div className="mt-4 space-y-3">
+                <label className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Digest settimanale</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Riepilogo assenze, orari e avvisi.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.weeklyDigest}
+                    onChange={(e) => updateSetting("weeklyDigest", e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                </label>
+                <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Priorita dashboard</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">Scegli l'area da mostrare appena entri.</p>
+                  <select className="mt-3 w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-800 dark:text-slate-100 px-3 py-2">
+                    <option>Assenze del giorno</option>
+                    <option>Avvisi urgenti</option>
+                    <option>Orario provvisorio</option>
+                  </select>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={settings.weeklyDigest}
-                  onChange={(e) => updateSetting("weeklyDigest", e.target.checked)}
-                  className="h-4 w-4"
-                />
-              </label>
-              <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
-                <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Priorita dashboard</p>
-                <p className="text-xs text-gray-500 dark:text-slate-400">Scegli l'area da mostrare appena entri.</p>
-                <select className="mt-3 w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-800 dark:text-slate-100 px-3 py-2">
-                  <option>Assenze del giorno</option>
-                  <option>Avvisi urgenti</option>
-                  <option>Orario provvisorio</option>
-                </select>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Impostazioni Docenti</h2>
-            <p className="text-sm text-gray-500 dark:text-slate-400">Preferenze personali per l'operativita quotidiana.</p>
-            <div className="mt-4 space-y-3">
-              <label className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Promemoria orario</p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400">Notifica prima delle prime ore.</p>
+          {!isVicepreside && (
+            <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Impostazioni Docenti</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Preferenze personali per l'operativita quotidiana.</p>
+              <div className="mt-4 space-y-3">
+                <label className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Promemoria orario</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Notifica prima delle prime ore.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.reminderOrario}
+                    onChange={(e) => updateSetting("reminderOrario", e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Laboratorio di default</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Usa aula laboratorio quando disponibile.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.laboratorioDefault}
+                    onChange={(e) => updateSetting("laboratorioDefault", e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                </label>
+                <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Lingua avvisi</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">Imposta la lingua delle notifiche.</p>
+                  <select className="mt-3 w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-800 dark:text-slate-100 px-3 py-2">
+                    <option>Italiano</option>
+                    <option>English</option>
+                  </select>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={settings.reminderOrario}
-                  onChange={(e) => updateSetting("reminderOrario", e.target.checked)}
-                  className="h-4 w-4"
-                />
-              </label>
-              <label className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Laboratorio di default</p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400">Usa aula laboratorio quando disponibile.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.laboratorioDefault}
-                  onChange={(e) => updateSetting("laboratorioDefault", e.target.checked)}
-                  className="h-4 w-4"
-                />
-              </label>
-              <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
-                <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Lingua avvisi</p>
-                <p className="text-xs text-gray-500 dark:text-slate-400">Imposta la lingua delle notifiche.</p>
-                <select className="mt-3 w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-800 dark:text-slate-100 px-3 py-2">
-                  <option>Italiano</option>
-                  <option>English</option>
-                </select>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

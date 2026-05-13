@@ -37,6 +37,16 @@ export interface Avviso {
     allegati: string[];
     creatoDa?: string | null;
     aggiornatoDa?: string | null;
+    lettoDaUtente?: boolean;
+    lettureCount?: number;
+}
+
+export interface AvvisoLettura {
+    id: number;
+    nome: string;
+    cognome: string;
+    email: string;
+    lettoAt: string;
 }
 
 export interface AvvisoFormData {

@@ -185,26 +185,26 @@ const GestioneDocenti = () => {
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Nome</label>
                                 <input type="text" name="nome" required value={formData.nome} onChange={handleChange}
-                                       className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                                       className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cognome</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Cognome</label>
                                 <input type="text" name="cognome" required value={formData.cognome} onChange={handleChange}
-                                       className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                                       className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Istituzionale</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Email Istituzionale</label>
                             <input type="email" name="email" required value={formData.email} onChange={handleChange}
-                                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                                   className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Materie Insegnate</label>
-                            <div className="grid grid-cols-2 gap-2 bg-gray-50 p-4 rounded-xl border border-gray-100 max-h-48 overflow-y-auto">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">Materie Insegnate</label>
+                            <div className="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-slate-900 p-4 rounded-xl border border-gray-100 dark:border-slate-800 max-h-48 overflow-y-auto">
                                 {materie.map(materia => (
                                     <label key={materia.id} className="flex items-center gap-2 cursor-pointer">
                                         <input
@@ -213,31 +213,31 @@ const GestioneDocenti = () => {
                                             onChange={() => handleMateriaToggle(materia.id)}
                                             className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                                         />
-                                        <span className="text-sm text-gray-700">{materia.nome}</span>
+                                        <span className="text-sm text-gray-700 dark:text-slate-200">{materia.nome}</span>
                                     </label>
                                 ))}
                             </div>
                         </div>
 
-                        <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors mt-4">
+                        <label className="flex items-center gap-3 p-4 border border-gray-200 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors mt-4">
                             <input type="checkbox" name="laboratorio" checked={formData.laboratorio} onChange={handleChange}
                                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
                             <div>
-                                <p className="font-medium text-gray-800">Docente Tecnico Pratico (ITP)</p>
-                                <p className="text-xs text-gray-500">Spunta se il docente insegna solo in laboratorio</p>
+                                <p className="font-medium text-gray-800 dark:text-slate-100">Docente Tecnico Pratico (ITP)</p>
+                                <p className="text-xs text-gray-500 dark:text-slate-400">Spunta se il docente insegna solo in laboratorio</p>
                             </div>
                         </label>
                     </div>
 
                     {error && (
-                        <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                        <div className="mt-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-200 text-sm rounded-lg border border-red-100 dark:border-red-500/30">
                             {error}
                         </div>
                     )}
 
                     <div className="flex justify-end gap-3 mt-8">
                         <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }}
-                                className="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition-colors">
+                            className="px-5 py-2.5 text-gray-600 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors">
                             Annulla
                         </button>
                         <button type="submit"

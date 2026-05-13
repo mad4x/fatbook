@@ -45,15 +45,20 @@ export default function AvvisiPage() {
     handleDeleteSelected,
     isSaving,
     isUpdating,
-    isDeleting
+    isDeleting,
+    letture,
+    lettureLoading,
+    lettureError,
+    isMarkingRead,
+    markAvvisoLetto
   } = useAvvisi();
 
   return (
     <div className="p-8 max-w-6xl mx-auto relative">
-      <div className="flex justify-between items-end mb-8 border-b pb-4">
+      <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-slate-800 pb-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Avvisi</h1>
-          <p className="text-gray-500 mt-1">Istituto C. GRASSI - A.S. 2025/2026</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">Avvisi</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-1">Istituto C. GRASSI - A.S. 2025/2026</p>
         </div>
       </div>
 
@@ -71,18 +76,18 @@ export default function AvvisiPage() {
 
       {loading ? (
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
+          <div className="h-8 bg-gray-200 dark:bg-slate-800 rounded w-48 mb-4"></div>
           {[1, 2].map((n) => (
-            <div key={n} className="h-28 bg-gray-100 rounded-lg w-full"></div>
+            <div key={n} className="h-28 bg-gray-100 dark:bg-slate-900 rounded-lg w-full"></div>
           ))}
         </div>
       ) : (
         !error && (
           <div className="space-y-8">
             {avvisiFiltrati.length === 0 && (
-              <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-                <p className="text-gray-500 text-lg">Nessun avviso presente nel database.</p>
-                <p className="text-gray-400 text-sm mt-2">
+              <div className="text-center py-12 bg-gray-50 dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800">
+                <p className="text-gray-500 dark:text-slate-400 text-lg">Nessun avviso presente nel database.</p>
+                <p className="text-gray-400 dark:text-slate-500 text-sm mt-2">
                   Usa il tasto &quot;+ Nuovo Avviso&quot; per crearne uno.
                 </p>
               </div>
@@ -113,6 +118,12 @@ export default function AvvisiPage() {
         formatDate={formatDate}
         toOpenableUrl={toOpenableUrl}
         getAttachmentLabel={getAttachmentLabel}
+        letture={letture}
+        lettureLoading={lettureLoading}
+        lettureError={lettureError}
+        canManageAvvisi={canManageAvvisi}
+        isMarkingRead={isMarkingRead}
+        onMarkLetto={markAvvisoLetto}
       />
 
       {canManageAvvisi && (

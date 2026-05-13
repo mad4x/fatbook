@@ -7,7 +7,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import spike.fatbook.backend.enums.PrioritaAvviso;
 import spike.fatbook.backend.enums.StatoAvviso;
 import spike.fatbook.backend.model.Avviso;
+import spike.fatbook.backend.model.AvvisoLettura;
+import spike.fatbook.backend.model.Utente;
 import spike.fatbook.backend.repository.AvvisoRepository;
+import spike.fatbook.backend.repository.AvvisoLetturaRepository;
+import spike.fatbook.backend.repository.UtenteRepository;
 
 import java.time.LocalDate;
 import java.nio.charset.StandardCharsets;
@@ -21,9 +25,17 @@ import java.util.stream.Collectors;
 public class AvvisoService {
 
     private final AvvisoRepository avvisoRepository;
+    private final AvvisoLetturaRepository avvisoLetturaRepository;
+    private final UtenteRepository utenteRepository;
 
-    public AvvisoService(AvvisoRepository avvisoRepository) {
+    public AvvisoService(
+            AvvisoRepository avvisoRepository,
+            AvvisoLetturaRepository avvisoLetturaRepository,
+            UtenteRepository utenteRepository
+    ) {
         this.avvisoRepository = avvisoRepository;
+        this.avvisoLetturaRepository = avvisoLetturaRepository;
+        this.utenteRepository = utenteRepository;
     }
 
     public List<Avviso> getAll() {
@@ -42,6 +54,50 @@ public class AvvisoService {
 
     public Optional<Avviso> getByIdVisible(Long id) {
         return getById(id).filter(this::isVisibleForCurrentUser);
+    }
+
+    public boolean markLetto(Long avvisoId) {
+        Optional<Avviso> avvisoOpt = getByIdVisible(avvisoId);
+        if (avvisoOpt.isEmpty()) {
+            return false;
+        }
+
+        Optional<Utente> utenteOpt = currentUtente();
+        if (utenteOpt.isEmpty()) {
+            return false;
+        }
+
+        Utente utente = utenteOpt.get();
+        if (avvisoLetturaRepository.existsByAvvisoIdAndUtenteId(avvisoId, utente.getId())) {
+            return true;
+        }
+
+        AvvisoLettura lettura = new AvvisoLettura();
+        lettura.setAvviso(avvisoOpt.get());
+        lettura.setUtente(utente);
+        avvisoLetturaRepository.save(lettura);
+        return true;
+    }
+
+    public boolean isLettoByCurrentUser(Long avvisoId) {
+        Optional<Utente> utenteOpt = currentUtente();
+        if (utenteOpt.isEmpty()) {
+            return false;
+        }
+
+        return avvisoLetturaRepository.existsByAvvisoIdAndUtenteId(avvisoId, utenteOpt.get().getId());
+    }
+
+    public int getLettureCount(Long avvisoId) {
+        return (int) avvisoLetturaRepository.countByAvvisoId(avvisoId);
+    }
+
+    public List<AvvisoLettura> getLettureByAvviso(Long avvisoId) {
+        if (!avvisoRepository.existsById(avvisoId)) {
+            return List.of();
+        }
+
+        return avvisoLetturaRepository.findAllByAvvisoIdOrderByLettoAtDesc(avvisoId);
     }
 
     public Avviso create(
@@ -160,6 +216,14 @@ public class AvvisoService {
         }
 
         return name;
+    }
+
+    private Optional<Utente> currentUtente() {
+        String actor = currentActor();
+        if (actor.isBlank() || "sistema".equals(actor)) {
+            return Optional.empty();
+        }
+        return utenteRepository.findByEmail(actor);
     }
 
     private boolean isVisibleForCurrentUser(Avviso avviso) {

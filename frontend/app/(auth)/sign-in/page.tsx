@@ -93,7 +93,7 @@ const LoginPage = () => {
         </div>
 
         {errorMsg && (
-          <div className="p-3 text-sm text-red-500 bg-red-100 rounded-md text-center">
+          <div className="p-3 text-sm text-red-500 dark:text-red-200 bg-red-100 dark:bg-red-500/10 rounded-md text-center">
             {errorMsg}
           </div>
         )}

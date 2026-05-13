@@ -18,12 +18,12 @@ export function AvvisiFilters({
   onCreateClick
 }: AvvisiFiltersProps) {
   return (
-    <div className="bg-gray-50 p-4 rounded-xl mb-8 flex flex-wrap gap-4 items-center border border-gray-100 shadow-sm">
+    <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl mb-8 flex flex-wrap gap-4 items-center border border-gray-100 dark:border-slate-800 shadow-sm">
       <div className="flex-1 min-w-[250px]">
         <input
           type="text"
           placeholder="Cerca titolo, contenuto, autore, categoria o tag..."
-          className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          className="w-full p-2.5 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-950 text-gray-800 dark:text-slate-100"
           value={searchTerm}
           onChange={(event) => onSearchChange(event.target.value)}
         />
@@ -31,7 +31,7 @@ export function AvvisiFilters({
 
       <div className="w-64">
         <select
-          className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+          className="w-full p-2.5 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-950 text-gray-800 dark:text-slate-100"
           value={filtroPriorita}
           onChange={(event) => onFiltroPrioritaChange(event.target.value as FiltroPrioritaAvviso)}
         >

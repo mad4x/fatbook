@@ -21,46 +21,64 @@ export function AvvisoCard({
 }: AvvisoCardProps) {
   return (
     <article
-      className={`rounded-xl border p-5 shadow-sm transition hover:shadow-md bg-white ${
-        avviso.priorita === 'ALTA' ? 'border-red-300 bg-red-50/40' : 'border-gray-200'
+      className={`rounded-xl border p-5 shadow-sm transition hover:shadow-md bg-white dark:bg-slate-950 ${
+        avviso.priorita === 'ALTA'
+          ? 'border-red-300 bg-red-50/40 dark:bg-red-500/10 dark:border-red-500/40'
+          : 'border-gray-200 dark:border-slate-800'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-bold text-gray-800 leading-tight">{avviso.titolo}</h3>
+        <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 leading-tight">{avviso.titolo}</h3>
         <div className="flex gap-1">
           <span
             className={`text-xs font-semibold px-2 py-1 rounded-full ${
-              avviso.priorita === 'ALTA' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+              avviso.priorita === 'ALTA'
+                ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-200'
+                : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-200'
             }`}
           >
             {avviso.priorita}
           </span>
           <span
             className={`text-xs font-semibold px-2 py-1 rounded-full ${
-              avviso.stato === 'BOZZA' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+              avviso.stato === 'BOZZA'
+                ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200'
+                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200'
             }`}
           >
             {avviso.stato}
           </span>
+          <span
+            className={`text-xs font-semibold px-2 py-1 rounded-full ${
+              avviso.lettoDaUtente
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200'
+            }`}
+          >
+            {avviso.lettoDaUtente ? 'Letto' : 'Da leggere'}
+          </span>
         </div>
       </div>
 
-      <p className="text-xs text-gray-500 mt-2">Categoria: {avviso.categoria || 'Generale'}</p>
+      <p className="text-xs text-gray-500 dark:text-slate-400 mt-2">Categoria: {avviso.categoria || 'Generale'}</p>
       {(avviso.tags || []).length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {avviso.tags.map((tag) => (
-            <span key={`${avviso.id}-${tag}`} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+            <span
+              key={`${avviso.id}-${tag}`}
+              className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200 px-2 py-1 rounded-full"
+            >
               #{tag}
             </span>
           ))}
         </div>
       )}
 
-      <p className="text-sm text-gray-700 mt-3 whitespace-pre-wrap">{avviso.contenuto}</p>
+      <p className="text-sm text-gray-700 dark:text-slate-200 mt-3 whitespace-pre-wrap">{avviso.contenuto}</p>
 
       {(avviso.allegati || []).length > 0 && (
         <div className="mt-3">
-          <p className="text-xs font-semibold text-gray-600 mb-1">Allegati</p>
+          <p className="text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Allegati</p>
           <ul className="space-y-1">
             {avviso.allegati.map((allegato, index) => (
               <li key={`${avviso.id}-${allegato}`}>
@@ -68,7 +86,7 @@ export function AvvisoCard({
                   href={toOpenableUrl(allegato)}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-700 underline break-all"
+                  className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200 underline break-all"
                 >
                   {getAttachmentLabel(allegato, index)}
                 </a>
@@ -78,8 +96,11 @@ export function AvvisoCard({
         </div>
       )}
 
-      <div className="mt-4 text-xs text-gray-500 space-y-1">
+      <div className="mt-4 text-xs text-gray-500 dark:text-slate-400 space-y-1">
         <p>Autore: {avviso.autore}</p>
+        {canManageAvvisi && (
+          <p>Letto da: {typeof avviso.lettureCount === 'number' ? avviso.lettureCount : 0}</p>
+        )}
         <p>
           Creato: {formatDate(avviso.dataCreazione)} {avviso.creatoDa ? `• da ${avviso.creatoDa}` : ''}
         </p>
@@ -92,14 +113,14 @@ export function AvvisoCard({
       <div className="mt-4 flex justify-end gap-2">
         <button
           onClick={() => onOpen(avviso)}
-          className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium"
+          className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 rounded-lg font-medium"
         >
           Apri
         </button>
         {canManageAvvisi && (
           <button
             onClick={() => onEdit(avviso)}
-            className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg font-medium"
+            className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-500/20 dark:text-blue-200 dark:hover:bg-blue-500/30 rounded-lg font-medium"
           >
             Modifica
           </button>

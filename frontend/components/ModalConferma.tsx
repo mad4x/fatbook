@@ -21,13 +21,13 @@ const ModalConferma = ({
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={titolo}>
             <div className="space-y-4">
-                <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl text-orange-800">
+                <div className="p-4 bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/30 rounded-xl text-orange-800 dark:text-orange-200">
                     <p className="font-medium mb-1">Sei sicuro di voler procedere?</p>
                     <p className="text-sm opacity-90">{messaggio}</p>
                 </div>
 
                 {errore && (
-                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                    <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-200 text-sm rounded-lg border border-red-100 dark:border-red-500/30">
                         {errore}
                     </div>
                 )}
@@ -35,7 +35,7 @@ const ModalConferma = ({
                 <div className="flex justify-end gap-3 mt-8">
                     <button
                         onClick={onClose}
-                        className="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition-colors"
+                        className="px-5 py-2.5 text-gray-600 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors"
                     >
                         Annulla
                     </button>

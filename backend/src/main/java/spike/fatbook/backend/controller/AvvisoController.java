@@ -1,13 +1,13 @@
 package spike.fatbook.backend.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import spike.fatbook.backend.enums.PrioritaAvviso;
 import spike.fatbook.backend.enums.StatoAvviso;
 import spike.fatbook.backend.model.Avviso;
+import spike.fatbook.backend.model.AvvisoLettura;
 import spike.fatbook.backend.service.AvvisoService;
 
 import java.time.LocalDateTime;
@@ -92,6 +92,33 @@ public class AvvisoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{id}/letto")
+    public ResponseEntity<?> markLetto(@PathVariable Long id) {
+        boolean marked = avvisoService.markLetto(id);
+        if (!marked) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Avviso non trovato");
+        }
+
+        return ResponseEntity.ok(new AvvisoLettoStateResponse(
+                id,
+                avvisoService.isLettoByCurrentUser(id),
+                avvisoService.getLettureCount(id)
+        ));
+    }
+
+    @GetMapping("/{id}/letti")
+    public ResponseEntity<?> getLetture(@PathVariable Long id) {
+        if (avvisoService.getById(id).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Avviso non trovato");
+        }
+
+        List<AvvisoLetturaResponse> letture = avvisoService.getLettureByAvviso(id).stream()
+                .map(this::toLetturaResponse)
+                .toList();
+
+        return ResponseEntity.ok(letture);
+    }
+
     private ValidationResult validateRequest(AvvisoWriteRequest request) {
         String titolo = Optional.ofNullable(request.titolo()).orElse("").trim();
         String contenuto = Optional.ofNullable(request.contenuto()).orElse("").trim();
@@ -123,7 +150,19 @@ public class AvvisoController {
                 parseAllegati(avviso.getAllegatiCsv()),
                 avviso.getCreatoDa(),
                 avviso.getAggiornatoDa(),
-                avviso.getDataAggiornamento()
+                avviso.getDataAggiornamento(),
+                avvisoService.isLettoByCurrentUser(avviso.getId()),
+                avvisoService.getLettureCount(avviso.getId())
+        );
+    }
+
+    private AvvisoLetturaResponse toLetturaResponse(AvvisoLettura lettura) {
+        return new AvvisoLetturaResponse(
+                lettura.getId(),
+                lettura.getUtente().getNome(),
+                lettura.getUtente().getCognome(),
+                lettura.getUtente().getEmail(),
+                lettura.getLettoAt()
         );
     }
 
@@ -202,9 +241,27 @@ public class AvvisoController {
             List<String> allegati,
             String creatoDa,
             String aggiornatoDa,
-            LocalDateTime dataAggiornamento
+                LocalDateTime dataAggiornamento,
+                boolean lettoDaUtente,
+                int lettureCount
     ) {
     }
+
+            public record AvvisoLetturaResponse(
+                Long id,
+                String nome,
+                String cognome,
+                String email,
+                LocalDateTime lettoAt
+            ) {
+            }
+
+            public record AvvisoLettoStateResponse(
+                Long avvisoId,
+                boolean lettoDaUtente,
+                int lettureCount
+            ) {
+            }
 
     private record ValidationResult(boolean valid, String titolo, String contenuto, String autore, String categoria, String errorMessage) {
         static ValidationResult success(String titolo, String contenuto, String autore, String categoria) {

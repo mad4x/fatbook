@@ -3,6 +3,7 @@ import {
   AVVISO_INITIAL_FORM_DATA,
   Avviso,
   AvvisoFormData,
+  AvvisoLettura,
   FiltroPrioritaAvviso
 } from '@/constants/types';
 import { getBaseUrl } from '@/lib/api-url';
@@ -38,6 +39,10 @@ export function useAvvisi() {
   const [newAttachmentFiles, setNewAttachmentFiles] = useState<File[]>([]);
   const [editAttachmentFiles, setEditAttachmentFiles] = useState<File[]>([]);
   const [editEmbeddedAttachments, setEditEmbeddedAttachments] = useState<string[]>([]);
+  const [letture, setLetture] = useState<AvvisoLettura[]>([]);
+  const [lettureLoading, setLettureLoading] = useState<boolean>(false);
+  const [lettureError, setLettureError] = useState<string | null>(null);
+  const [isMarkingRead, setIsMarkingRead] = useState<boolean>(false);
 
   const canManageAvvisi = hasVicepresidenzaRole(userRoles);
 
@@ -114,11 +119,93 @@ export function useAvvisi() {
   const openViewModal = (avviso: Avviso) => {
     setSelectedViewAvviso(avviso);
     setIsViewModalOpen(true);
+    if (canManageAvvisi) {
+      void loadLetture(avviso.id);
+    }
   };
 
   const closeViewModal = () => {
     setIsViewModalOpen(false);
     setSelectedViewAvviso(null);
+    setLetture([]);
+    setLettureError(null);
+  };
+
+  const loadLetture = async (avvisoId: number) => {
+    if (!canManageAvvisi) {
+      return;
+    }
+
+    try {
+      setLettureLoading(true);
+      setLettureError(null);
+
+      const response = await fetchWithAuth(`${getBaseUrl()}/avvisi/${avvisoId}/letti`, {
+        method: 'GET',
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Errore del server: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setLetture(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Errore letture avviso:', err);
+      setLettureError(getFriendlyError(err));
+    } finally {
+      setLettureLoading(false);
+    }
+  };
+
+  const markAvvisoLetto = async (avvisoId: number) => {
+    try {
+      setIsMarkingRead(true);
+
+      const response = await fetchWithAuth(`${getBaseUrl()}/avvisi/${avvisoId}/letto`, {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Errore del server: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const lettureCount = typeof data?.lettureCount === 'number' ? data.lettureCount : undefined;
+      const lettoDaUtente = Boolean(data?.lettoDaUtente);
+
+      setAvvisi((previous) =>
+        previous.map((item) =>
+          item.id === avvisoId
+            ? {
+                ...item,
+                lettoDaUtente,
+                lettureCount: lettureCount ?? item.lettureCount
+              }
+            : item
+        )
+      );
+
+      setSelectedViewAvviso((previous) =>
+        previous && previous.id === avvisoId
+          ? {
+              ...previous,
+              lettoDaUtente,
+              lettureCount: lettureCount ?? previous.lettureCount
+            }
+          : previous
+      );
+
+      if (canManageAvvisi) {
+        void loadLetture(avvisoId);
+      }
+    } catch (err) {
+      console.error('Errore segna letto:', err);
+      setNetworkError(getFriendlyError(err));
+    } finally {
+      setIsMarkingRead(false);
+    }
   };
 
   const removeExistingAttachment = (indexToRemove: number) => {
@@ -274,6 +361,11 @@ export function useAvvisi() {
     handleDeleteSelected,
     isSaving,
     isUpdating,
-    isDeleting
+    isDeleting,
+    letture,
+    lettureLoading,
+    lettureError,
+    isMarkingRead,
+    markAvvisoLetto
   };
 }

@@ -145,7 +145,11 @@ const GestioneClassiPage = () => {
       </div>
 
       {loading && <p className="text-sm text-gray-600 dark:text-slate-300">Caricamento classi...</p>}
-      {error && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-700 dark:text-red-200 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg p-3">
+          {error}
+        </p>
+      )}
 
       {!loading && (
         <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
@@ -222,7 +226,7 @@ const GestioneClassiPage = () => {
                           setClasseDaEliminare(classe.id);
                           setDeleteError("");
                         }}
-                        className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 hover:bg-red-50"
+                        className="px-3 py-1.5 rounded-md border border-red-200 dark:border-red-500/40 text-red-700 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-500/10"
                       >
                         Elimina
                       </button>

@@ -72,7 +72,9 @@ export const normalizeAvviso = (raw: unknown): Avviso => {
     tags: normalizeList(value.tags),
     allegati: normalizeList(value.allegati),
     creatoDa: typeof value.creatoDa === 'string' ? value.creatoDa : null,
-    aggiornatoDa: typeof value.aggiornatoDa === 'string' ? value.aggiornatoDa : null
+    aggiornatoDa: typeof value.aggiornatoDa === 'string' ? value.aggiornatoDa : null,
+    lettoDaUtente: Boolean(value.lettoDaUtente),
+    lettureCount: typeof value.lettureCount === 'number' ? value.lettureCount : 0
   };
 };
 

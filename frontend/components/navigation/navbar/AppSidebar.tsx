@@ -60,7 +60,7 @@ const AppSidebar = () => {
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {SIDEBAR_ELEMENTS.map((item) => (
+                            {SIDEBAR_ELEMENTS.filter((item) => item.title !== "Impostazioni").map((item) => (
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton asChild>
                                         <Link href={item.url}>
@@ -80,6 +80,16 @@ const AppSidebar = () => {
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             )}
+
+                            {SIDEBAR_ELEMENTS.filter((item) => item.title === "Impostazioni").map((item) => (
+                                <SidebarMenuItem key={item.title}>
+                                    <SidebarMenuButton asChild>
+                                        <Link href={item.url}>
+                                            <span>{item.title}</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
@@ -94,17 +104,17 @@ const AppSidebar = () => {
                     <div className="flex flex-col gap-4 w-full p-2">
                         <div className="flex flex-row items-center gap-3 overflow-hidden">
                             <Avatar className="h-10 w-10">
-                                <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
+                                <AvatarFallback className="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200 font-semibold">
                                     {userInfo.nome?.substring(0, 1).toUpperCase()}
                                     {userInfo.cognome?.substring(0, 1).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
 
                             <div className="flex flex-col items-start overflow-hidden">
-                                <p className="text-sm font-semibold truncate w-full">
+                                <p className="text-sm font-semibold truncate w-full text-slate-900 dark:text-slate-100">
                                     {userInfo.nome} {userInfo.cognome}
                                 </p>
-                                <p className="text-xs text-gray-500 truncate w-full">
+                                <p className="text-xs text-gray-500 dark:text-slate-400 truncate w-full">
                                     {userInfo.email}
                                 </p>
                             </div>

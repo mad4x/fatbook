@@ -14,14 +14,14 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps)=> {
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white dark:bg-slate-950 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
                 {/* Intestazione del Modale */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-slate-800">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-lg transition-colors"
+                        className="text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 p-1 rounded-lg transition-colors"
                     >
                         <X size={24} />
                     </button>
