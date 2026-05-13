@@ -50,12 +50,6 @@ export const PANNELLO_VICEPRESIDE_ELEMENTS = [
     "icon": <Building2 size={32} />
   },
     {
-        "href": "/vicepresidenza/avvisi",
-        "title": "Gestione avvisi",
-        "description": "Crea avvisi e gestisci le bozze",
-        "icon": <Files size={32} />
-    },
-    {
         "href": "/vicepresidenza/sostituzioni",
         "title": "Controlla sostituzioni",
         "description": "Sostituisci i docenti assenti",

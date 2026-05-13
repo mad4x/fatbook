@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import VicepresideBack from "@/components/ui/vicepreside-back";
 import { Plus } from 'lucide-react';
 import Modal from '@/components/Modal';
 import { getBaseUrl } from "@/lib/api-url";
@@ -13,6 +14,7 @@ const GestioneDocenti = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [materie, setMaterie] = useState<{id: number, nome: string}[]>([]);
     const [docenti, setDocenti] = useState<DocenteResponseDTO[]>([]);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [formData, setFormData] = useState({
         nome: '',
         cognome: '',
@@ -34,6 +36,12 @@ const GestioneDocenti = () => {
         } catch (error) {
             console.error("Errore nel caricamento dei docenti", error);
         }
+    };
+
+    const resetForm = () => {
+        setFormData({ nome: '', cognome: '', email: '', laboratorio: false, materieIds: [] });
+        setEditingId(null);
+        setError("");
     };
 
     useEffect(() => {
@@ -82,23 +90,41 @@ const GestioneDocenti = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await fetchWithAuth(`${getBaseUrl()}/vicepresidenza/docente`, {
-                method: "POST",
+            const url = editingId
+                ? `${getBaseUrl()}/vicepresidenza/docente/${editingId}`
+                : `${getBaseUrl()}/vicepresidenza/docente`;
+            const method = editingId ? "PUT" : "POST";
+            const response = await fetchWithAuth(url, {
+                method,
                 body: JSON.stringify(formData)
             });
 
             if (response.ok) {
                 setIsModalOpen(false);
-                setFormData({ nome: '', cognome: '', email: '', laboratorio: false, materieIds: [] });
+                resetForm();
 
                 // Aggiorniamo la tabella ricaricando i dati dal server
                 await fetchDocenti();
             } else {
-                setError("Impossibile salvare il docente. Riprova.");
+                const text = await response.text();
+                setError(text || "Impossibile salvare il docente. Riprova.");
             }
         } catch (error) {
             console.error("Errore submit:", error);
         }
+    };
+
+    const openEdit = (docente: DocenteResponseDTO) => {
+        setEditingId(docente.id);
+        setFormData({
+            nome: docente.nome,
+            cognome: docente.cognome,
+            email: docente.email,
+            laboratorio: docente.laboratorio,
+            materieIds: docente.materieIds ?? []
+        });
+        setError("");
+        setIsModalOpen(true);
     };
 
     const confermaEliminazione = async () => {
@@ -120,29 +146,39 @@ const GestioneDocenti = () => {
 
     return (
         <div className="p-8 max-w-5xl mx-auto w-full h-full">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Docenti</h1>
-                    <p className="text-gray-500 mt-1">Gestisci il corpo docenti dell&apos;istituto</p>
+                    <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">Docenti</h1>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">Gestisci il corpo docenti dell&apos;istituto</p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"
-                >
-                    <Plus size={20} />
-                    Nuovo Docente
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                    <VicepresideBack />
+                    <button
+                        onClick={() => {
+                            resetForm();
+                            setIsModalOpen(true);
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"
+                    >
+                        <Plus size={20} />
+                        Nuovo Docente
+                    </button>
+                </div>
             </div>
 
             <TabellaDocenti
                 docenti={docenti}
                 onElimina={(id) => { setDocenteDaEliminare(id); setDeleteError(""); }}
+                onModifica={openEdit}
             />
 
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Aggiungi nuovo docente"
+                onClose={() => {
+                    setIsModalOpen(false);
+                    resetForm();
+                }}
+                title={editingId ? "Modifica docente" : "Aggiungi nuovo docente"}
             >
                 {/* IL FORM RIMANE ESATTAMENTE UGUALE A PRIMA */}
                 <form onSubmit={handleSubmit}>
@@ -200,13 +236,13 @@ const GestioneDocenti = () => {
                     )}
 
                     <div className="flex justify-end gap-3 mt-8">
-                        <button type="button" onClick={() => setIsModalOpen(false)}
+                        <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }}
                                 className="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition-colors">
                             Annulla
                         </button>
                         <button type="submit"
                                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-sm transition-colors">
-                            Salva Docente
+                            {editingId ? "Salva modifiche" : "Salva Docente"}
                         </button>
                     </div>
 

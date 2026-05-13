@@ -4,6 +4,7 @@ export interface DocenteResponseDTO {
     cognome: string;
     email: string;
     laboratorio: boolean;
+    materieIds: number[];
     materie: string[];
 }
 

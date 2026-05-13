@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import VicepresideBack from "@/components/ui/vicepreside-back";
+import ModalConferma from "@/components/ModalConferma";
 import { useEffect, useState } from "react";
 
 import { getBaseUrl } from "@/lib/api-url";
@@ -12,7 +14,7 @@ type Classe = {
   sezione: string;
 };
 
-export default function GestioneClassiPage() {
+const GestioneClassiPage = () => {
   const [classi, setClassi] = useState<Classe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +25,8 @@ export default function GestioneClassiPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editAnno, setEditAnno] = useState(1);
   const [editSezione, setEditSezione] = useState("A");
+  const [classeDaEliminare, setClasseDaEliminare] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const loadClassi = async () => {
     setLoading(true);
@@ -78,7 +82,7 @@ export default function GestioneClassiPage() {
 
   const deleteClasse = async (id: number) => {
     setError(null);
-    const response = await fetchWithAuth(`${getBaseUrl()}/vicepresidenza/classi/${id}`, {
+    const response = await fetchWithAuth(`${getBaseUrl()}/vicepresidenza/classi/${id}?cascade=true`, {
       method: "DELETE",
     });
 
@@ -90,31 +94,45 @@ export default function GestioneClassiPage() {
     await loadClassi();
   };
 
+  const confermaEliminazione = async () => {
+    if (!classeDaEliminare) return;
+    try {
+      setDeleteError("");
+      await deleteClasse(classeDaEliminare);
+      setClasseDaEliminare(null);
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : "Errore durante l'eliminazione");
+    }
+  };
+
   return (
     <section className="p-8 max-w-6xl mx-auto w-full h-full space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold text-gray-800">Gestione Classi</h1>
-        <p className="text-gray-500 mt-2">Crea classi e accedi alla modifica dell&apos;orario cella per cella.</p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">Gestione Classi</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-2">Crea classi e accedi alla modifica dell&apos;orario cella per cella.</p>
+        </div>
+        <VicepresideBack />
       </header>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 grid gap-3 md:grid-cols-[1fr_1fr_auto] items-end">
+      <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 grid gap-3 md:grid-cols-[1fr_1fr_auto] items-end">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Anno</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Anno</label>
           <input
             type="number"
             min={1}
             max={5}
             value={newAnno}
             onChange={(e) => setNewAnno(Number(e.target.value) || 1)}
-            className="w-full border border-gray-300 rounded-lg p-2.5"
+            className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg p-2.5"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Sezione</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Sezione</label>
           <input
             value={newSezione}
             onChange={(e) => setNewSezione(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg p-2.5"
+            className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg p-2.5"
             placeholder="A"
           />
         </div>
@@ -126,13 +144,13 @@ export default function GestioneClassiPage() {
         </button>
       </div>
 
-      {loading && <p className="text-sm text-gray-600">Caricamento classi...</p>}
+      {loading && <p className="text-sm text-gray-600 dark:text-slate-300">Caricamento classi...</p>}
       {error && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
 
       {!loading && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-700">
+            <thead className="bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-200">
               <tr>
                 <th className="text-left px-4 py-3">Classe</th>
                 <th className="text-left px-4 py-3">Azioni</th>
@@ -150,23 +168,23 @@ export default function GestioneClassiPage() {
                           max={5}
                           value={editAnno}
                           onChange={(e) => setEditAnno(Number(e.target.value) || 1)}
-                          className="w-20 border border-gray-300 rounded-lg p-2"
+                          className="w-20 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg p-2"
                         />
                         <input
                           value={editSezione}
                           onChange={(e) => setEditSezione(e.target.value)}
-                          className="w-20 border border-gray-300 rounded-lg p-2"
+                          className="w-20 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg p-2"
                         />
                       </div>
                     ) : (
-                      <span className="font-medium text-gray-800">{classe.anno}{classe.sezione}</span>
+                      <span className="font-medium text-gray-800 dark:text-slate-100">{classe.anno}{classe.sezione}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
                       <Link
                         href={`/vicepresidenza/classi/${classe.id}`}
-                        className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800"
                       >
                         Apri orario
                       </Link>
@@ -181,7 +199,7 @@ export default function GestioneClassiPage() {
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50"
+                            className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800"
                           >
                             Annulla
                           </button>
@@ -193,14 +211,17 @@ export default function GestioneClassiPage() {
                             setEditAnno(classe.anno);
                             setEditSezione(classe.sezione);
                           }}
-                          className="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50"
+                          className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800"
                         >
                           Modifica
                         </button>
                       )}
 
                       <button
-                        onClick={() => void deleteClasse(classe.id).catch((e) => setError(e.message))}
+                        onClick={() => {
+                          setClasseDaEliminare(classe.id);
+                          setDeleteError("");
+                        }}
                         className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 hover:bg-red-50"
                       >
                         Elimina
@@ -211,13 +232,28 @@ export default function GestioneClassiPage() {
               ))}
               {classi.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="px-4 py-6 text-gray-500">Nessuna classe disponibile.</td>
+                  <td colSpan={2} className="px-4 py-6 text-gray-500 dark:text-slate-400">Nessuna classe disponibile.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       )}
+
+      <ModalConferma
+        isOpen={classeDaEliminare !== null}
+        onClose={() => {
+          setClasseDaEliminare(null);
+          setDeleteError("");
+        }}
+        onConfirm={confermaEliminazione}
+        titolo="Elimina Classe"
+        messaggio="Eliminando la classe verranno rimossi tutti gli orari associati e le assegnazioni docenti."
+        testoPulsante="Sì, elimina"
+        errore={deleteError}
+      />
     </section>
   );
 }
+
+export default GestioneClassiPage;

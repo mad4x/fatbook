@@ -148,12 +148,12 @@ export default function OrarioPage() {
 	return (
 		<section className="mx-4 my-6 space-y-4">
 			<header className="space-y-1">
-				<h1 className="text-2xl font-bold text-slate-900">Orari classi</h1>
+				<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Orari classi</h1>
 			</header>
 
-			<div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-[2fr_1fr_auto]">
+			<div className="grid gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 md:grid-cols-[2fr_1fr_auto]">
 				<div className="space-y-2">
-					<label className="text-sm font-medium text-slate-700" htmlFor="class-search">
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="class-search">
 						Cerca classe
 					</label>
 					<Input
@@ -171,12 +171,12 @@ export default function OrarioPage() {
 				</div>
 
 				<div className="space-y-2">
-					<label className="text-sm font-medium text-slate-700" htmlFor="class-select">
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="class-select">
 						Menu a tendina classi
 					</label>
 					<select
 						id="class-select"
-						className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm"
+						className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-3 text-sm"
 						value={selectedClassId}
 						onChange={(event) => {
 							const value = event.target.value;
@@ -204,7 +204,7 @@ export default function OrarioPage() {
 				</div>
 			</div>
 
-			{loading && <p className="text-sm text-slate-600">Caricamento orari in corso...</p>}
+			{loading && <p className="text-sm text-slate-600 dark:text-slate-300">Caricamento orari in corso...</p>}
 
 			{error && (
 				<p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -217,10 +217,10 @@ export default function OrarioPage() {
 					{searchableGroups.map((group) => (
 						<article
 							key={group.key}
-							className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+							className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm"
 						>
 							<div className="mb-3 flex items-center justify-between gap-3">
-								<h2 className="text-lg font-semibold text-slate-900">Classe {group.className}</h2>
+								<h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Classe {group.className}</h2>
 
 								{group.classId !== null ? (
 									<Button asChild size="sm" variant="outline">
@@ -238,10 +238,10 @@ export default function OrarioPage() {
 							<div className="overflow-x-auto">
 								<table className="min-w-full border-collapse text-sm">
 									<thead>
-										<tr className="bg-slate-100 text-slate-700">
-											<th className="border border-slate-200 px-3 py-2 text-left">Ora</th>
+										<tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+											<th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left">Ora</th>
 											{SCHOOL_DAYS.map((day) => (
-												<th key={day} className="border border-slate-200 px-3 py-2 text-left">
+												<th key={day} className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left">
 													{day}
 												</th>
 											))}
@@ -251,17 +251,17 @@ export default function OrarioPage() {
 									<tbody>
 										{HOURS.map((hour) => (
 											<tr key={`${group.key}-${hour}`}>
-												<td className="border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-800">
+												<td className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 font-semibold text-slate-800 dark:text-slate-100">
 													{hour}
 												</td>
 												{SCHOOL_DAYS.map((day) => {
 													const cell = getCell(group.entries, day, hour);
 
 													return (
-														<td key={`${group.key}-${day}-${hour}`} className="border border-slate-200 px-3 py-2">
-															<p className="font-medium text-slate-900">{cell?.subject ?? "-"}</p>
+														<td key={`${group.key}-${day}-${hour}`} className="border border-slate-200 dark:border-slate-700 px-3 py-2">
+															<p className="font-medium text-slate-900 dark:text-slate-100">{cell?.subject ?? "-"}</p>
 															{cell?.classroom && (
-																<p className="text-xs text-slate-500">Aula {cell.classroom}</p>
+																<p className="text-xs text-slate-500 dark:text-slate-400">Aula {cell.classroom}</p>
 															)}
 														</td>
 													);
@@ -275,7 +275,7 @@ export default function OrarioPage() {
 					))}
 
 					{searchableGroups.length === 0 && (
-						<p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+						<p className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-600 dark:text-slate-300">
 							Nessuna classe trovata con questo criterio.
 						</p>
 					)}

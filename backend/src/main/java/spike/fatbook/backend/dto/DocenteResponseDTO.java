@@ -8,5 +8,6 @@ public record DocenteResponseDTO (
     String cognome,
     String email,
     boolean laboratorio,
+    List<Long> materieIds,
     List<String> materie // Al frontend passiamo solo una lista di nomi (es. ["Matematica", "Fisica"])
 ) {}

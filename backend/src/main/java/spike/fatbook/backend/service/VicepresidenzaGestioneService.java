@@ -15,11 +15,13 @@ import spike.fatbook.backend.dto.AulaAdminDTO;
 import spike.fatbook.backend.dto.AulaWriteDTO;
 import spike.fatbook.backend.dto.ClasseAdminDTO;
 import spike.fatbook.backend.dto.ClasseWriteDTO;
+import spike.fatbook.backend.dto.DocenteDisponibilitaDTO;
 import spike.fatbook.backend.dto.MateriaAdminDTO;
 import spike.fatbook.backend.dto.MateriaWriteDTO;
 import spike.fatbook.backend.dto.OrarioClasseUpsertDTO;
 import spike.fatbook.backend.dto.OrarioClasseUpdateDTO;
 import spike.fatbook.backend.dto.OrarioClasseVicepresideDTO;
+import spike.fatbook.backend.enums.GiornoSettimana;
 import spike.fatbook.backend.enums.VersioneOrario;
 import spike.fatbook.backend.model.Aula;
 import spike.fatbook.backend.model.Classe;
@@ -72,7 +74,17 @@ public class VicepresidenzaGestioneService {
     }
 
     @Transactional
-    public void deleteClasse(Long id) {
+    public void deleteClasse(Long id, boolean cascade) {
+        if (cascade) {
+            jdbcTemplate.update(
+                "DELETE FROM \"docente-ora_canonica\" WHERE ora_canonica_id IN (SELECT id FROM ora_canonica WHERE classe_id = ?)",
+                id
+            );
+            jdbcTemplate.update("DELETE FROM ora_canonica WHERE classe_id = ?", id);
+            classeRepository.deleteById(id);
+            return;
+        }
+
         try {
             classeRepository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
@@ -106,7 +118,18 @@ public class VicepresidenzaGestioneService {
     }
 
     @Transactional
-    public void deleteMateria(Long id) {
+    public void deleteMateria(Long id, boolean cascade) {
+        if (cascade) {
+            jdbcTemplate.update(
+                "DELETE FROM \"docente-ora_canonica\" WHERE ora_canonica_id IN (SELECT id FROM ora_canonica WHERE materia_id = ?)",
+                id
+            );
+            jdbcTemplate.update("DELETE FROM ora_canonica WHERE materia_id = ?", id);
+            jdbcTemplate.update("DELETE FROM docente_materia WHERE materia_id = ?", id);
+            materiaRepository.deleteById(id);
+            return;
+        }
+
         try {
             materiaRepository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
@@ -142,7 +165,13 @@ public class VicepresidenzaGestioneService {
     }
 
     @Transactional
-    public void deleteAula(Long id) {
+    public void deleteAula(Long id, boolean cascade) {
+        if (cascade) {
+            jdbcTemplate.update("UPDATE ora_canonica SET aula_id = NULL WHERE aula_id = ?", id);
+            aulaRepository.deleteById(id);
+            return;
+        }
+
         try {
             aulaRepository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
@@ -177,6 +206,20 @@ public class VicepresidenzaGestioneService {
                 docenti
             );
         }).toList();
+    }
+
+    public List<DocenteDisponibilitaDTO> getDisponibilitaDocenti(GiornoSettimana giorno, int ora, Long classeId) {
+        return docenteRepository.findAll().stream()
+            .map(docente -> {
+                boolean occupato = docenteOraCanonicaRepository.existsByDocenteIdAndOraCanonicaGiornoAndOraCanonicaNumeroOraAndOraCanonicaClasseIdNot(
+                    docente.getId(),
+                    giorno,
+                    ora,
+                    classeId
+                );
+                return new DocenteDisponibilitaDTO(docente.getId(), !occupato);
+            })
+            .toList();
     }
 
     @Transactional
@@ -231,12 +274,17 @@ public class VicepresidenzaGestioneService {
         List<Long> docentiIdsRaw,
         boolean materiaObbligatoria
     ) {
+        final Long materiaIdSelezionata;
         if (materiaId != null) {
             Materia materia = materiaRepository.findById(materiaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Materia non valida"));
             ora.setMateria(materia);
-        } else if (materiaObbligatoria && ora.getMateria() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Materia obbligatoria per creare una nuova ora");
+            materiaIdSelezionata = materia.getId();
+        } else {
+            if (materiaObbligatoria && ora.getMateria() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Materia obbligatoria per creare una nuova ora");
+            }
+            materiaIdSelezionata = ora.getMateria() != null ? ora.getMateria().getId() : null;
         }
 
         if (aulaId != null) {
@@ -273,6 +321,16 @@ public class VicepresidenzaGestioneService {
             List<Docente> docenti = docenteRepository.findAllById(docentiIds);
             if (docenti.size() != docentiIds.size()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Uno o piu docenti non esistono");
+            }
+
+            if (materiaIdSelezionata != null) {
+                for (Docente docente : docenti) {
+                    boolean abilitato = docente.getDocenze().stream()
+                        .anyMatch(legame -> legame.getMateria().getId().equals(materiaIdSelezionata));
+                    if (!abilitato) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Il docente selezionato non insegna questa materia");
+                    }
+                }
             }
 
             List<DocenteOraCanonica> nuoviLegami = new ArrayList<>();

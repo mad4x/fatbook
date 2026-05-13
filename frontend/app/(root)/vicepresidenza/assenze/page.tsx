@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import VicepresideBack from "@/components/ui/vicepreside-back";
 import { Plus, Trash2, Calendar, Clock, AlertCircle } from 'lucide-react';
 import Modal from '@/components/Modal';
 import ModalConferma from '@/components/ModalConferma';
@@ -136,80 +137,83 @@ const GestioneAssenze = () => {
 
     return (
         <div className="p-8 max-w-5xl mx-auto w-full h-full">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Registro Assenze</h1>
-                    <p className="text-gray-500 mt-1">Consulta e registra le assenze dei docenti</p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    {/* Date Picker integrato nella header */}
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <Calendar className="w-5 h-5 text-gray-500" />
-                        </div>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="bg-white border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 shadow-sm"
-                        />
+            <div className="flex flex-col gap-4 mb-8">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">Registro Assenze</h1>
+                        <p className="text-gray-500 dark:text-slate-400 mt-1">Consulta e registra le assenze dei docenti</p>
                     </div>
 
-                    <button
-                        onClick={handleOpenModal}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
-                    >
-                        <Plus size={20} />
-                        Registra Assenza
-                    </button>
+                    <div className="flex flex-wrap items-center gap-4">
+                        {/* Date Picker integrato nella header */}
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <Calendar className="w-5 h-5 text-gray-500 dark:text-slate-300" />
+                            </div>
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 shadow-sm"
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleOpenModal}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+                        >
+                            <Plus size={20} />
+                            Registra Assenza
+                        </button>
+                        <VicepresideBack />
+                    </div>
                 </div>
             </div>
 
             {/* TABELLA ASSENZE (Puoi estrarla in un componente TabellaAssenze.tsx) */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
                 {assenze.length === 0 ? (
-                    <div className="p-12 text-center text-gray-500 flex flex-col items-center">
-                        <AlertCircle className="w-12 h-12 text-gray-300 mb-3" />
-                        <p className="text-lg font-medium text-gray-700">Nessuna assenza registrata</p>
+                    <div className="p-12 text-center text-gray-500 dark:text-slate-400 flex flex-col items-center">
+                        <AlertCircle className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-3" />
+                        <p className="text-lg font-medium text-gray-700 dark:text-slate-200">Nessuna assenza registrata</p>
                         <p className="text-sm">Tutti i docenti sono presenti in questa data.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Docente</th>
-                                <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
-                                <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Motivazione</th>
-                                <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Azioni</th>
+                            <tr className="bg-gray-50/50 dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700">
+                                <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wider">Docente</th>
+                                <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wider">Tipo</th>
+                                <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wider">Motivazione</th>
+                                <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wider text-right">Azioni</th>
                             </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
                             {assenze.map((assenza) => (
-                                <tr key={assenza.id} className="hover:bg-gray-50/50 transition-colors">
+                                <tr key={assenza.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800 transition-colors">
                                     <td className="py-4 px-6">
-                                        <div className="font-medium text-gray-900">{assenza.nomeDocente} {assenza.cognomeDocente}</div>
-                                        <div className="text-sm text-gray-500">{assenza.emailDocente}</div>
+                                        <div className="font-medium text-gray-900 dark:text-slate-100">{assenza.nomeDocente} {assenza.cognomeDocente}</div>
+                                        <div className="text-sm text-gray-500 dark:text-slate-400">{assenza.emailDocente}</div>
                                     </td>
                                     <td className="py-4 px-6">
                                         {assenza.giornaliera ? (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-200">
                                                     <Calendar size={14} /> Giornaliera
                                                 </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-200">
                                                     <Clock size={14} /> {assenza.ora}ª Ora
                                                 </span>
                                         )}
                                     </td>
-                                    <td className="py-4 px-6 text-sm text-gray-600">
+                                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-slate-300">
                                         {assenza.motivazione || "-"}
                                     </td>
                                     <td className="py-4 px-6 text-right">
                                         <button
                                             onClick={() => { setAssenzaDaEliminare(assenza.id); setDeleteError(""); }}
-                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex items-center justify-center"
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors inline-flex items-center justify-center"
                                             title="Elimina assenza"
                                         >
                                             <Trash2 size={18} />
@@ -339,6 +343,6 @@ const GestioneAssenze = () => {
             />
         </div>
     );
-}
+};
 
 export default GestioneAssenze;

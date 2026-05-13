@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import VicepresideBack from "@/components/ui/vicepreside-back";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -24,7 +25,8 @@ type EditableCell = {
 
 type MateriaOption = { id: number; nome: string };
 type AulaOption = { id: number; numero: string; piano: number };
-type DocenteOption = { id: number; nome: string; cognome: string };
+type DocenteOption = { id: number; nome: string; cognome: string; materieIds?: number[] };
+type DisponibilitaDocente = { id: number; disponibile: boolean };
 
 const HOURS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
@@ -70,10 +72,12 @@ export default function ClasseOrarioEditorPage() {
   const [selectedMateriaId, setSelectedMateriaId] = useState<number>(0);
   const [selectedAulaId, setSelectedAulaId] = useState<string>("");
   const [selectedDocentiIds, setSelectedDocentiIds] = useState<number[]>([]);
+  const [disponibilita, setDisponibilita] = useState<Record<number, boolean>>({});
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingDisponibilita, setLoadingDisponibilita] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -131,6 +135,33 @@ export default function ClasseOrarioEditorPage() {
     setSelectedAulaId(cell.aulaId !== null ? String(cell.aulaId) : "");
     setSelectedDocentiIds(cell.docentiIds);
   };
+
+  const refreshDisponibilita = useCallback(async () => {
+    if (!selected?.day || !selected?.hour) {
+      setDisponibilita({});
+      return;
+    }
+
+    setLoadingDisponibilita(true);
+    try {
+      const response = await fetchWithAuth(
+        `${getBaseUrl()}/vicepresidenza/docenti/disponibilita?giorno=${encodeURIComponent(selected.day)}&ora=${selected.hour}&classeId=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error(`Errore disponibilita docenti: ${response.status}`);
+      }
+      const data = (await response.json()) as DisponibilitaDocente[];
+      const map: Record<number, boolean> = {};
+      data.forEach((item) => {
+        map[item.id] = item.disponibile;
+      });
+      setDisponibilita(map);
+    } catch (e) {
+      console.error("Errore disponibilita docenti", e);
+    } finally {
+      setLoadingDisponibilita(false);
+    }
+  }, [classId, selected]);
 
   const toggleDocente = (docenteId: number) => {
     setSelectedDocentiIds((prev) =>
@@ -208,30 +239,53 @@ export default function ClasseOrarioEditorPage() {
     }
   };
 
+  useEffect(() => {
+    void refreshDisponibilita();
+  }, [refreshDisponibilita]);
+
+  useEffect(() => {
+    if (!selected) return;
+    setSelectedDocentiIds((prev) =>
+      prev.filter((docenteId) => {
+        const docente = docenti.find((item) => item.id === docenteId);
+        if (!docente) return false;
+        const abilitato = selectedMateriaId ? (docente.materieIds ?? []).includes(selectedMateriaId) : true;
+        const disponibile = disponibilita[docenteId] ?? true;
+        return abilitato && disponibile;
+      }),
+    );
+  }, [selected, selectedMateriaId, disponibilita, docenti]);
+
   return (
     <section className="mx-4 my-6 space-y-4">
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Modifica orario classe {className}</h1>
-          <p className="text-sm text-slate-600">Clicca una cella per cambiare materia, aula e docenti.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Modifica orario classe {className}</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Clicca una cella per cambiare materia, aula e docenti.</p>
         </div>
-        <Link href="/vicepresidenza/classi" className="px-3 py-2 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">
-          Torna alle classi
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <VicepresideBack />
+          <Link
+            href="/vicepresidenza/classi"
+            className="px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            Torna alle classi
+          </Link>
+        </div>
       </header>
 
-      {loading && <p className="text-sm text-slate-600">Caricamento in corso...</p>}
+      {loading && <p className="text-sm text-slate-600 dark:text-slate-300">Caricamento in corso...</p>}
       {error && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
 
       {!loading && !error && (
         <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
             <table className="min-w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-slate-100 text-slate-700">
-                  <th className="border border-slate-200 px-3 py-2 text-left">Ora</th>
+                <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left">Ora</th>
                   {SCHOOL_DAYS.map((day) => (
-                    <th key={day} className="border border-slate-200 px-3 py-2 text-left">
+                    <th key={day} className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left">
                       {day}
                     </th>
                   ))}
@@ -240,7 +294,7 @@ export default function ClasseOrarioEditorPage() {
               <tbody>
                 {HOURS.map((hour) => (
                   <tr key={hour}>
-                    <td className="border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-800">{hour}</td>
+                    <td className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 font-semibold text-slate-800 dark:text-slate-100">{hour}</td>
                     {SCHOOL_DAYS.map((day) => {
                       const cell = getCell(entries, day, hour);
                       const display =
@@ -260,14 +314,14 @@ export default function ClasseOrarioEditorPage() {
                         } as EditableCell);
 
                       return (
-                        <td key={`${day}-${hour}`} className="border border-slate-200 px-2 py-2 align-top">
+                        <td key={`${day}-${hour}`} className="border border-slate-200 dark:border-slate-700 px-2 py-2 align-top">
                           <button
                             onClick={() => openEditor(display)}
-                            className="w-full text-left rounded-md border border-slate-200 bg-slate-50 px-2 py-2 hover:border-blue-300 hover:bg-blue-50"
+                            className="w-full text-left rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-2 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-slate-800"
                           >
-                            <p className="font-medium text-slate-900">{display.materiaName}</p>
-                            <p className="text-xs text-slate-600">Aula {display.aulaName ?? "-"}</p>
-                            <p className="text-xs text-slate-500">Docenti: {display.docenti.length > 0 ? display.docenti.join(", ") : "nessuno"}</p>
+                            <p className="font-medium text-slate-900 dark:text-slate-100">{display.materiaName}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-300">Aula {display.aulaName ?? "-"}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Docenti: {display.docenti.length > 0 ? display.docenti.join(", ") : "nessuno"}</p>
                           </button>
                         </td>
                       );
@@ -278,18 +332,18 @@ export default function ClasseOrarioEditorPage() {
             </table>
           </div>
 
-          <aside className="rounded-xl border border-slate-200 bg-white p-4 space-y-4 h-fit">
-            <h2 className="text-lg font-semibold text-slate-900">Editor cella</h2>
-            {!selected && <p className="text-sm text-slate-600">Seleziona una cella dalla tabella.</p>}
+          <aside className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-4 h-fit">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Editor cella</h2>
+            {!selected && <p className="text-sm text-slate-600 dark:text-slate-300">Seleziona una cella dalla tabella.</p>}
 
             {selected && (
               <>
-                <p className="text-sm text-slate-700">{selected.day} - ora {selected.hour}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-200">{selected.day} - ora {selected.hour}</p>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Materia</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Materia</label>
                   <select
-                    className="w-full h-9 rounded-md border border-slate-300 px-2"
+                    className="w-full h-9 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-2"
                     value={selectedMateriaId}
                     onChange={(e) => setSelectedMateriaId(Number(e.target.value))}
                   >
@@ -302,9 +356,9 @@ export default function ClasseOrarioEditorPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Aula</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Aula</label>
                   <select
-                    className="w-full h-9 rounded-md border border-slate-300 px-2"
+                    className="w-full h-9 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-2"
                     value={selectedAulaId}
                     onChange={(e) => setSelectedAulaId(e.target.value)}
                   >
@@ -318,16 +372,41 @@ export default function ClasseOrarioEditorPage() {
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium text-slate-700 mb-1">Docenti assegnati</p>
-                  <div className="max-h-56 overflow-y-auto rounded-md border border-slate-200 p-2 space-y-1">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Docenti assegnati</p>
+                  {loadingDisponibilita && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Verifica disponibilita in corso...</p>
+                  )}
+                  <div className="max-h-56 overflow-y-auto rounded-md border border-slate-200 dark:border-slate-700 p-2 space-y-1">
                     {docenti.map((docente) => (
-                      <label key={docente.id} className="flex items-center gap-2 text-sm text-slate-700">
-                        <input
-                          type="checkbox"
-                          checked={selectedDocentiIds.includes(docente.id)}
-                          onChange={() => toggleDocente(docente.id)}
-                        />
-                        {docente.nome} {docente.cognome}
+                      <label key={docente.id} className="flex items-center justify-between gap-2 text-sm text-slate-700 dark:text-slate-200">
+                        <span className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedDocentiIds.includes(docente.id)}
+                            onChange={() => toggleDocente(docente.id)}
+                            disabled={
+                              !!selectedMateriaId &&
+                              (!(docente.materieIds ?? []).includes(selectedMateriaId) || !(disponibilita[docente.id] ?? true))
+                            }
+                          />
+                          {docente.nome} {docente.cognome}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          {selectedMateriaId && !(docente.materieIds ?? []).includes(selectedMateriaId) && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Non abilitato</span>
+                          )}
+                          {selectedMateriaId && (docente.materieIds ?? []).includes(selectedMateriaId) && (
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full ${
+                                (disponibilita[docente.id] ?? true)
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {(disponibilita[docente.id] ?? true) ? "Disponibile" : "Occupato"}
+                            </span>
+                          )}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -343,7 +422,7 @@ export default function ClasseOrarioEditorPage() {
                   </button>
                   <button
                     onClick={() => setSelected(null)}
-                    className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     Chiudi
                   </button>

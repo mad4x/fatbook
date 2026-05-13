@@ -120,3 +120,34 @@
     @apply bg-background text-foreground;
   }
 }
+
+:root[data-layout="compact"] table th,
+:root[data-layout="compact"] table td {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.dark table {
+  color: var(--foreground);
+}
+
+.dark thead {
+  background-color: var(--muted);
+}
+
+.dark tbody tr {
+  border-color: var(--border);
+}
+
+.dark tbody tr:hover {
+  background-color: var(--accent);
+}

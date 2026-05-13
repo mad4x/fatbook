@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import spike.fatbook.backend.dto.*;
+import spike.fatbook.backend.enums.GiornoSettimana;
 import spike.fatbook.backend.service.DocenteService;
 import spike.fatbook.backend.service.VicepresidenzaGestioneService;
 
@@ -44,8 +45,11 @@ public class VicepresidenzaGestioneController {
     }
 
     @DeleteMapping("/classi/{id}")
-    public ResponseEntity<Void> deleteClasse(@PathVariable Long id) {
-        service.deleteClasse(id);
+    public ResponseEntity<Void> deleteClasse(
+        @PathVariable Long id,
+        @org.springframework.web.bind.annotation.RequestParam(defaultValue = "false") boolean cascade
+    ) {
+        service.deleteClasse(id, cascade);
         return ResponseEntity.noContent().build();
     }
 
@@ -65,8 +69,11 @@ public class VicepresidenzaGestioneController {
     }
 
     @DeleteMapping("/materie/{id}")
-    public ResponseEntity<Void> deleteMateria(@PathVariable Long id) {
-        service.deleteMateria(id);
+    public ResponseEntity<Void> deleteMateria(
+        @PathVariable Long id,
+        @org.springframework.web.bind.annotation.RequestParam(defaultValue = "false") boolean cascade
+    ) {
+        service.deleteMateria(id, cascade);
         return ResponseEntity.noContent().build();
     }
 
@@ -86,8 +93,11 @@ public class VicepresidenzaGestioneController {
     }
 
     @DeleteMapping("/aule/{id}")
-    public ResponseEntity<Void> deleteAula(@PathVariable Long id) {
-        service.deleteAula(id);
+    public ResponseEntity<Void> deleteAula(
+        @PathVariable Long id,
+        @org.springframework.web.bind.annotation.RequestParam(defaultValue = "false") boolean cascade
+    ) {
+        service.deleteAula(id, cascade);
         return ResponseEntity.noContent().build();
     }
 
@@ -128,5 +138,26 @@ public class VicepresidenzaGestioneController {
             // Per qualsiasi altro errore imprevisto, restituiamo un 500
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore interno durante la creazione del docente.");
         }
+    }
+
+    @PutMapping("/docente/{id}")
+    public ResponseEntity<String> aggiornaDocente(@PathVariable Long id, @RequestBody DocenteRequestDTO dto) {
+        try {
+            docenteService.aggiornaDocente(id, dto);
+            return ResponseEntity.ok("Docente aggiornato con successo!");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore interno durante l'aggiornamento del docente.");
+        }
+    }
+
+    @GetMapping("/docenti/disponibilita")
+    public ResponseEntity<List<DocenteDisponibilitaDTO>> getDisponibilitaDocenti(
+        @org.springframework.web.bind.annotation.RequestParam GiornoSettimana giorno,
+        @org.springframework.web.bind.annotation.RequestParam int ora,
+        @org.springframework.web.bind.annotation.RequestParam Long classeId
+    ) {
+        return ResponseEntity.ok(service.getDisponibilitaDocenti(giorno, ora, classeId));
     }
 }

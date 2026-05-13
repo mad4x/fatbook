@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import VicepresideBack from "@/components/ui/vicepreside-back";
+import ModalConferma from "@/components/ModalConferma";
 
 import { getBaseUrl } from "@/lib/api-url";
 import { fetchWithAuth } from "@/lib/jwt";
@@ -19,6 +21,8 @@ export default function GestioneMateriePage() {
   const [editNome, setEditNome] = useState("");
   const [editDescrizione, setEditDescrizione] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [materiaDaEliminare, setMateriaDaEliminare] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const loadMaterie = async () => {
     const response = await fetchWithAuth(`${getBaseUrl()}/vicepresidenza/materie`);
@@ -39,19 +43,22 @@ export default function GestioneMateriePage() {
 
   return (
     <section className="p-8 max-w-6xl mx-auto w-full h-full space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold text-gray-800">Gestione Materie</h1>
-        <p className="text-gray-500 mt-2">Amministra elenco materie e descrizioni.</p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">Gestione Materie</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-2">Amministra elenco materie e descrizioni.</p>
+        </div>
+        <VicepresideBack />
       </header>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 grid gap-3 md:grid-cols-[1fr_2fr_auto] items-end">
+      <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 grid gap-3 md:grid-cols-[1fr_2fr_auto] items-end">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-          <input value={nome} onChange={(e) => setNome(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5" />
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Nome</label>
+          <input value={nome} onChange={(e) => setNome(e.target.value)} className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg p-2.5" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione</label>
-          <input value={descrizione} onChange={(e) => setDescrizione(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5" />
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Descrizione</label>
+          <input value={descrizione} onChange={(e) => setDescrizione(e.target.value)} className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg p-2.5" />
         </div>
         <button
           onClick={() => {
@@ -75,9 +82,9 @@ export default function GestioneMateriePage() {
 
       {error && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
 
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-700">
+          <thead className="bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-200">
             <tr>
               <th className="text-left px-4 py-3">Nome</th>
               <th className="text-left px-4 py-3">Descrizione</th>
@@ -86,17 +93,17 @@ export default function GestioneMateriePage() {
           </thead>
           <tbody>
             {materie.map((materia) => (
-              <tr key={materia.id} className="border-t border-gray-100">
+              <tr key={materia.id} className="border-t border-gray-100 dark:border-slate-800">
                 <td className="px-4 py-3">
                   {editingId === materia.id ? (
-                    <input value={editNome} onChange={(e) => setEditNome(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2" />
+                    <input value={editNome} onChange={(e) => setEditNome(e.target.value)} className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg p-2" />
                   ) : (
                     materia.nome
                   )}
                 </td>
                 <td className="px-4 py-3">
                   {editingId === materia.id ? (
-                    <input value={editDescrizione} onChange={(e) => setEditDescrizione(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2" />
+                    <input value={editDescrizione} onChange={(e) => setEditDescrizione(e.target.value)} className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg p-2" />
                   ) : (
                     materia.descrizione
                   )}
@@ -122,7 +129,7 @@ export default function GestioneMateriePage() {
                         >
                           Salva
                         </button>
-                        <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50">Annulla</button>
+                        <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800">Annulla</button>
                       </>
                     ) : (
                       <button
@@ -131,7 +138,7 @@ export default function GestioneMateriePage() {
                           setEditNome(materia.nome);
                           setEditDescrizione(materia.descrizione);
                         }}
-                        className="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50"
+                        className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800"
                       >
                         Modifica
                       </button>
@@ -139,15 +146,8 @@ export default function GestioneMateriePage() {
 
                     <button
                       onClick={() => {
-                        void (async () => {
-                          setError(null);
-                          const response = await fetchWithAuth(`${getBaseUrl()}/vicepresidenza/materie/${materia.id}`, { method: "DELETE" });
-                          if (!response.ok) {
-                            const text = await response.text();
-                            throw new Error(text || `Eliminazione fallita: ${response.status}`);
-                          }
-                          await loadMaterie();
-                        })().catch((e) => setError(e.message));
+                        setMateriaDaEliminare(materia.id);
+                        setDeleteError("");
                       }}
                       className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 hover:bg-red-50"
                     >
@@ -159,12 +159,41 @@ export default function GestioneMateriePage() {
             ))}
             {materie.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-gray-500">Nessuna materia disponibile.</td>
+                <td colSpan={3} className="px-4 py-6 text-gray-500 dark:text-slate-400">Nessuna materia disponibile.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      <ModalConferma
+        isOpen={materiaDaEliminare !== null}
+        onClose={() => {
+          setMateriaDaEliminare(null);
+          setDeleteError("");
+        }}
+        onConfirm={async () => {
+          if (!materiaDaEliminare) return;
+          try {
+            const response = await fetchWithAuth(
+              `${getBaseUrl()}/vicepresidenza/materie/${materiaDaEliminare}?cascade=true`,
+              { method: "DELETE" },
+            );
+            if (!response.ok) {
+              const text = await response.text();
+              throw new Error(text || `Eliminazione fallita: ${response.status}`);
+            }
+            setMateriaDaEliminare(null);
+            await loadMaterie();
+          } catch (e) {
+            setDeleteError(e instanceof Error ? e.message : "Errore durante l'eliminazione");
+          }
+        }}
+        titolo="Elimina Materia"
+        messaggio="La materia verra rimossa da docenze e ore di orario collegate."
+        testoPulsante="Sì, elimina"
+        errore={deleteError}
+      />
     </section>
   );
 }

@@ -86,8 +86,8 @@ export default function OrarioDetailPage() {
     <section className="mx-4 my-6 space-y-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dettaglio orario classe {className}</h1>
-          <p className="text-sm text-slate-600">Vista completa da lunedi a venerdi con 8 ore.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dettaglio orario classe {className}</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Vista completa da lunedi a venerdi con 8 ore.</p>
         </div>
 
         <Button asChild variant="outline">
@@ -95,7 +95,7 @@ export default function OrarioDetailPage() {
         </Button>
       </header>
 
-      {loading && <p className="text-sm text-slate-600">Caricamento dettaglio in corso...</p>}
+      {loading && <p className="text-sm text-slate-600 dark:text-slate-300">Caricamento dettaglio in corso...</p>}
 
       {error && (
         <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -104,13 +104,13 @@ export default function OrarioDetailPage() {
       )}
 
       {!loading && !error && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
           <table className="min-w-full border-collapse text-sm">
             <thead>
-              <tr className="bg-slate-100 text-slate-700">
-                <th className="border border-slate-200 px-3 py-2 text-left">Ora</th>
+              <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left">Ora</th>
                 {SCHOOL_DAYS.map((day) => (
-                  <th key={day} className="border border-slate-200 px-3 py-2 text-left">
+                  <th key={day} className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left">
                     {day}
                   </th>
                 ))}
@@ -120,20 +120,20 @@ export default function OrarioDetailPage() {
             <tbody>
               {HOURS.map((hour) => (
                 <tr key={`detail-${hour}`}>
-                  <td className="border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-800">
+                  <td className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 font-semibold text-slate-800 dark:text-slate-100">
                     {hour}
                   </td>
                   {SCHOOL_DAYS.map((day) => {
                     const cell = getCell(entries, day, hour);
 
                     return (
-                      <td key={`detail-${day}-${hour}`} className="border border-slate-200 px-3 py-2">
-                        <p className="font-medium text-slate-900">{cell?.subject ?? "-"}</p>
+                      <td key={`detail-${day}-${hour}`} className="border border-slate-200 dark:border-slate-700 px-3 py-2">
+                        <p className="font-medium text-slate-900 dark:text-slate-100">{cell?.subject ?? "-"}</p>
                         {cell?.classroom && (
-                          <p className="text-xs text-slate-500">Aula {cell.classroom}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Aula {cell.classroom}</p>
                         )}
                         {cell && (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             Docenti: {cell.teachers.length > 0 ? cell.teachers.join(", ") : "nessun docente assegnato"}
                           </p>
                         )}

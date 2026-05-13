@@ -68,6 +68,10 @@ public class DocenteService {
         return docenteRepository.findAll().stream()
                 .map(docente -> {
                     // 1. Prepariamo la lista delle materie
+                    List<Long> idsMaterie = docente.getDocenze().stream()
+                            .map(legame -> legame.getMateria().getId())
+                            .toList();
+
                     List<String> nomiMaterie = docente.getDocenze().stream()
                             .map(legame -> legame.getMateria().getNome())
                             .toList();
@@ -80,10 +84,48 @@ public class DocenteService {
                             docente.getUtente().getCognome(),
                             docente.getUtente().getEmail(),
                             docente.isLaboratorio(), // O getLaboratorio() a seconda dell'entità
+                            idsMaterie,
                             nomiMaterie
                     );
                 })
                 .toList();
+    }
+
+    @Transactional
+    public void aggiornaDocente(Long id, DocenteRequestDTO dto) {
+        Docente docente = docenteRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Docente non trovato"));
+
+        Utente utente = docente.getUtente();
+        if (utente == null) {
+            throw new IllegalArgumentException("Utente collegato non trovato");
+        }
+
+        if (dto.email() != null && !dto.email().equalsIgnoreCase(utente.getEmail())) {
+            if (utenteRepository.findByEmail(dto.email()).isPresent()) {
+                throw new IllegalArgumentException("Esiste gia un utente con questa email!");
+            }
+            utente.setEmail(dto.email());
+        }
+
+        utente.setNome(dto.nome());
+        utente.setCognome(dto.cognome());
+        utenteRepository.save(utente);
+
+        docente.setLaboratorio(dto.laboratorio());
+
+        docente.getDocenze().clear();
+        if (dto.materieIds() != null && !dto.materieIds().isEmpty()) {
+            List<Materia> materieSelezionate = materiaRepository.findAllById(dto.materieIds());
+            for (Materia materia : materieSelezionate) {
+                DocenteMateria legame = new DocenteMateria();
+                legame.setDocente(docente);
+                legame.setMateria(materia);
+                docente.getDocenze().add(legame);
+            }
+        }
+
+        docenteRepository.save(docente);
     }
 
     @Transactional
