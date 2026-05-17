@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getRolesFromToken, hasVicepresidenzaRole } from "@/lib/jwt";
+import { fetchWithAuth } from "@/lib/jwt";
+import { getBaseUrl } from "@/lib/api-url";
 
 type ThemeMode = "light" | "dark" | "system";
-
-const STORAGE_KEY = "fatbook-settings";
 
 type SettingsState = {
   theme: ThemeMode;
@@ -32,24 +32,40 @@ const DEFAULT_SETTINGS: SettingsState = {
 const ImpostazioniPage = () => {
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
   const [hydrated, setHydrated] = useState(false);
+  const [schoolDomain, setSchoolDomain] = useState("");
   const [userRoles, setUserRoles] = useState<string[]>([]);
 
   const isVicepreside = hasVicepresidenzaRole(userRoles);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
+    const loadSettings = async () => {
+      try {
+        const response = await fetchWithAuth(`${getBaseUrl()}/settings/me`);
+        if (response.ok) {
+          const data = (await response.json()) as SettingsState;
+          setSettings(data);
+        }
+      } catch {
+        setSettings(DEFAULT_SETTINGS);
+      }
+
+      if (isVicepreside) {
+        try {
+          const response = await fetchWithAuth(`${getBaseUrl()}/settings/global`);
+          if (response.ok) {
+            const data = (await response.json()) as { schoolDomain: string };
+            setSchoolDomain(data.schoolDomain ?? "");
+          }
+        } catch {
+          setSchoolDomain("");
+        }
+      }
+
       setHydrated(true);
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as Partial<SettingsState>;
-      setSettings((prev) => ({ ...prev, ...parsed }));
-    } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-    setHydrated(true);
-  }, []);
+    };
+
+    loadSettings();
+  }, [isVicepreside]);
 
   useEffect(() => {
     setUserRoles(getRolesFromToken());
@@ -57,7 +73,17 @@ const ImpostazioniPage = () => {
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    const persist = async () => {
+      try {
+        await fetchWithAuth(`${getBaseUrl()}/settings/me`, {
+          method: "PUT",
+          body: JSON.stringify(settings),
+        });
+      } catch {
+        // Ignora errori di rete: l'utente ritentera alla prossima modifica.
+      }
+    };
+    persist();
   }, [settings, hydrated]);
 
   useEffect(() => {
@@ -80,12 +106,16 @@ const ImpostazioniPage = () => {
 
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = () => applyTheme("system");
-    if ("addEventListener" in media) {
+    if (typeof media.addEventListener === "function") {
       media.addEventListener("change", handler);
       return () => media.removeEventListener("change", handler);
     }
-    media.addListener(handler);
-    return () => media.removeListener(handler);
+    const legacyMedia = media as MediaQueryList & {
+      addListener: (listener: (event: MediaQueryListEvent) => void) => void;
+      removeListener: (listener: (event: MediaQueryListEvent) => void) => void;
+    };
+    legacyMedia.addListener(handler);
+    return () => legacyMedia.removeListener(handler);
   }, [settings.theme]);
 
   useEffect(() => {
@@ -224,6 +254,37 @@ const ImpostazioniPage = () => {
                     <option>Avvisi urgenti</option>
                     <option>Orario provvisorio</option>
                   </select>
+                </div>
+                <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Dominio email istituzionale</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    Usato per generare gli account docenti: cognome.nome@dominio.
+                  </p>
+                  <input
+                    type="text"
+                    value={schoolDomain}
+                    onChange={(e) => setSchoolDomain(e.target.value.trim())}
+                    placeholder="dominioscolastico.edu.it"
+                    className="mt-3 w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-800 dark:text-slate-100 px-3 py-2"
+                  />
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await fetchWithAuth(`${getBaseUrl()}/settings/global`, {
+                            method: "PUT",
+                            body: JSON.stringify({ schoolDomain }),
+                          });
+                        } catch {
+                          // Silenzioso: errori di rete gestiti lato utente.
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-900 text-white"
+                    >
+                      Salva dominio
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

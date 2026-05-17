@@ -13,7 +13,30 @@ import {
 } from "@/constants/types";
 
 const SostituzioniPage = () => {
-    const oggi = new Date().toLocaleDateString("en-CA");
+    const getInitialDate = () => {
+        const today = new Date();
+        const day = today.getDay();
+        if (day === 6) {
+            today.setDate(today.getDate() + 2);
+        } else if (day === 0) {
+            today.setDate(today.getDate() + 1);
+        }
+        return today.toLocaleDateString("en-CA");
+    };
+
+    const shiftWeekday = (dateString: string, delta: number) => {
+        const date = new Date(dateString);
+        date.setDate(date.getDate() + delta);
+        const day = date.getDay();
+        if (day === 6) {
+            date.setDate(date.getDate() + (delta > 0 ? 2 : -1));
+        } else if (day === 0) {
+            date.setDate(date.getDate() + (delta > 0 ? 1 : -2));
+        }
+        return date.toLocaleDateString("en-CA");
+    };
+
+    const oggi = getInitialDate();
 
     const [selectedDate, setSelectedDate] = useState(oggi);
     const [slots, setSlots] = useState<SostituzioneSlotDTO[]>([]);
@@ -166,9 +189,7 @@ const SostituzioniPage = () => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    const date = new Date(selectedDate);
-                                    date.setDate(date.getDate() - 1);
-                                    setSelectedDate(date.toLocaleDateString("en-CA"));
+                                    setSelectedDate((prev) => shiftWeekday(prev, -1));
                                 }}
                                 className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100"
                                 aria-label="Giorno precedente"
@@ -182,9 +203,7 @@ const SostituzioniPage = () => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    const date = new Date(selectedDate);
-                                    date.setDate(date.getDate() + 1);
-                                    setSelectedDate(date.toLocaleDateString("en-CA"));
+                                    setSelectedDate((prev) => shiftWeekday(prev, 1));
                                 }}
                                 className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100"
                                 aria-label="Giorno successivo"

@@ -55,6 +55,7 @@ const LoginPage = () => {
       const data = await response.json();
       if(data.token) {
         localStorage.setItem('token', data.token);
+        document.cookie = `token=${data.token}; Path=/; SameSite=Lax`;
         router.replace('/dashboard');
       }
 

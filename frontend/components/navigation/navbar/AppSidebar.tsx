@@ -8,16 +8,15 @@ import {
     Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
     SidebarGroupContent, SidebarHeader, SidebarMenu,
     SidebarMenuButton, SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 import { SIDEBAR_ELEMENTS } from "@/constants";
-import {isVicepreside, getToken, getUserInfo} from "@/lib/jwt";
+import { isVicepreside, getToken, getUserInfo } from "@/lib/jwt";
 
 const AppSidebar = () => {
     const router = useRouter();
-
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -31,30 +30,38 @@ const AppSidebar = () => {
     if (!isMounted) {
         return (
             <Sidebar>
-                <SidebarHeader><h1 className="text-3xl font-bold py-3 px-2">Fat<span className="text-blue-400">Book</span></h1></SidebarHeader>
+                <SidebarHeader>
+                    <div className="flex items-center gap-3 py-3 px-2">
+                        <img src="/FatBook_logo.svg" alt="FatBook" className="h-11 w-11" />
+                        <h1 className="text-3xl font-bold">
+                            Fat<span className="text-blue-400">Book</span>
+                        </h1>
+                    </div>
+                </SidebarHeader>
             </Sidebar>
         );
     }
 
-    // --- ORA SIAMO SICURI DI ESSERE NEL BROWSER ---
-    // Possiamo derivare tutto in tempo reale senza usare useState!
-
     const token = getToken();
-    const isLoggedIn = !!token; // Trasforma il token in un booleano (true se c'è, false se è null)
+    const isLoggedIn = !!token;
     const vicepreside = isVicepreside();
-
     const userInfo = getUserInfo(token);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
+        document.cookie = "token=; Max-Age=0; path=/";
         router.replace("/sign-in");
     };
+
     return (
         <Sidebar>
             <SidebarHeader>
-                <h1 className="text-3xl font-bold py-3 px-2">
-                    Fat<span className="text-blue-400">Book</span>
-                </h1>
+                <div className="flex items-center gap-1">
+                    <img src="/FatBook_logo.svg" alt="FatBook" className="h-10 w-10 object-contain block"/>
+                    <h1 className="text-3xl font-bold">
+                        Fat<span className="text-blue-400">Book</span>
+                    </h1>
+                </div>
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
@@ -70,7 +77,6 @@ const AppSidebar = () => {
                                 </SidebarMenuItem>
                             ))}
 
-                            {/* Il Pannello appare solo se lo stato vicepreside è true */}
                             {vicepreside && isLoggedIn && (
                                 <SidebarMenuItem>
                                     <SidebarMenuButton asChild>
@@ -120,7 +126,6 @@ const AppSidebar = () => {
                             </div>
                         </div>
 
-                        {/* Pulsante di Logout */}
                         <Button
                             className="w-full"
                             variant="destructive"
@@ -132,7 +137,7 @@ const AppSidebar = () => {
                 )}
             </SidebarFooter>
         </Sidebar>
-    )
-}
+    );
+};
 
 export default AppSidebar;

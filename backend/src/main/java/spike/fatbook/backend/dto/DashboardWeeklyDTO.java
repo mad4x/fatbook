@@ -4,5 +4,6 @@ import java.util.List;
 
 public record DashboardWeeklyDTO(
     List<DashboardSlotDTO> slots,
-    DashboardStatsDTO stats
+    DashboardStatsDTO stats,
+    List<DashboardSostituzioneDTO> sostituzioni
 ) {}

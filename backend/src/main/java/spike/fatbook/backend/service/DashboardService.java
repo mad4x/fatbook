@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import spike.fatbook.backend.dto.DashboardSlotDTO;
+import spike.fatbook.backend.dto.DashboardSostituzioneDTO;
 import spike.fatbook.backend.dto.DashboardStatsDTO;
 import spike.fatbook.backend.dto.DashboardWeeklyDTO;
 import spike.fatbook.backend.enums.GiornoSettimana;
@@ -104,6 +105,30 @@ public class DashboardService {
             }
         }
 
+        List<Sostituzione> sostituzioniDocente = sostituzioneRepository
+            .findByDocenteSostitutoIdAndDataBetween(docente.getId(), monday, friday);
+
+        List<DashboardSostituzioneDTO> sostituzioni = new ArrayList<>();
+        for (Sostituzione sostituzione : sostituzioniDocente) {
+            GiornoSettimana giorno = mapDay(sostituzione.getData());
+            OraCanonica ora = oraCanonicaRepository.findByClasseIdAndGiornoAndNumeroOra(
+                sostituzione.getClasse().getId(),
+                giorno,
+                sostituzione.getOra()
+            );
+
+            sostituzioni.add(new DashboardSostituzioneDTO(
+                sostituzione.getData(),
+                giorno,
+                sostituzione.getOra(),
+                sostituzione.getClasse().getAnno() + sostituzione.getClasse().getSezione(),
+                ora != null ? ora.getMateria().getNome() : null,
+                ora != null && ora.getAula() != null ? ora.getAula().getNumero() : null,
+                sostituzione.getDocenteAssente().getUtente().getNome(),
+                sostituzione.getDocenteAssente().getUtente().getCognome()
+            ));
+        }
+
         int oreTotali = ore.size();
         int orePresenza = Math.max(oreTotali - assenzeCount, 0);
         double percentualeAssenza = oreTotali == 0 ? 0.0 : (assenzeCount * 100.0) / oreTotali;
@@ -115,7 +140,7 @@ public class DashboardService {
             percentualeAssenza
         );
 
-        return new DashboardWeeklyDTO(slots, stats);
+        return new DashboardWeeklyDTO(slots, stats, sostituzioni);
     }
 
     private String slotKey(LocalDate data, int ora) {

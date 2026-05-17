@@ -67,9 +67,21 @@ export interface DashboardStatsDTO {
     percentualeAssenza: number;
 }
 
+export interface DashboardSostituzioneDTO {
+    data: string;
+    giorno: string;
+    ora: number;
+    classeNome: string;
+    materia: string | null;
+    aula: string | null;
+    docenteAssenteNome: string;
+    docenteAssenteCognome: string;
+}
+
 export interface DashboardWeeklyDTO {
     slots: DashboardSlotDTO[];
     stats: DashboardStatsDTO;
+    sostituzioni: DashboardSostituzioneDTO[];
 }
 
 export interface SostituzioneDocenteStatsDTO {

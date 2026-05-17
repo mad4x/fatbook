@@ -15,12 +15,14 @@ const GestioneDocenti = () => {
     const [materie, setMaterie] = useState<{id: number, nome: string}[]>([]);
     const [docenti, setDocenti] = useState<DocenteResponseDTO[]>([]);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [schoolDomain, setSchoolDomain] = useState("");
     const [formData, setFormData] = useState({
         nome: '',
         cognome: '',
         email: '',
         laboratorio: false,
-        materieIds: [] as number[]
+        materieIds: [] as number[],
+        vicepreside: false
     });
     const [error, setError] = useState("");
     const [docenteDaEliminare, setDocenteDaEliminare] = useState<number | null>(null);
@@ -39,7 +41,7 @@ const GestioneDocenti = () => {
     };
 
     const resetForm = () => {
-        setFormData({ nome: '', cognome: '', email: '', laboratorio: false, materieIds: [] });
+        setFormData({ nome: '', cognome: '', email: '', laboratorio: false, materieIds: [], vicepreside: false });
         setEditingId(null);
         setError("");
     };
@@ -68,6 +70,37 @@ const GestioneDocenti = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+        const fetchDomain = async () => {
+            try {
+                const response = await fetchWithAuth(`${getBaseUrl()}/settings/global`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setSchoolDomain((data.schoolDomain ?? "").trim());
+                    return;
+                }
+            } catch {
+                // Ignora errori di rete.
+            }
+            setSchoolDomain("");
+        };
+
+        fetchDomain();
+    }, []);
+
+    const normalizeEmailPart = (value: string) =>
+        value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+    const buildEmail = (nome: string, cognome: string, domain: string) => {
+        const nomePart = normalizeEmailPart(nome);
+        const cognomePart = normalizeEmailPart(cognome);
+        const domainPart = domain.trim().toLowerCase();
+        if (!nomePart || !cognomePart || !domainPart) {
+            return "";
+        }
+        return `${cognomePart}.${nomePart}@${domainPart}`;
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -89,14 +122,28 @@ const GestioneDocenti = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError("");
+        const computedEmail = buildEmail(formData.nome, formData.cognome, schoolDomain);
+        if (!editingId && !computedEmail) {
+            setError("Imposta il dominio email in Impostazioni per generare gli account.");
+            return;
+        }
         try {
             const url = editingId
                 ? `${getBaseUrl()}/vicepresidenza/docente/${editingId}`
                 : `${getBaseUrl()}/vicepresidenza/docente`;
             const method = editingId ? "PUT" : "POST";
+            const payload: Record<string, unknown> = {
+                ...formData,
+                email: editingId ? formData.email : computedEmail
+            };
+            if (editingId) {
+                delete payload.vicepreside;
+                delete payload.email;
+            }
             const response = await fetchWithAuth(url, {
                 method,
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
@@ -121,7 +168,8 @@ const GestioneDocenti = () => {
             cognome: docente.cognome,
             email: docente.email,
             laboratorio: docente.laboratorio,
-            materieIds: docente.materieIds ?? []
+            materieIds: docente.materieIds ?? [],
+            vicepreside: false
         });
         setError("");
         setIsModalOpen(true);
@@ -198,8 +246,18 @@ const GestioneDocenti = () => {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Email Istituzionale</label>
-                            <input type="email" name="email" required value={formData.email} onChange={handleChange}
-                                   className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                            <input
+                                type="text"
+                                value={editingId ? formData.email : buildEmail(formData.nome, formData.cognome, schoolDomain) || ""}
+                                readOnly
+                                placeholder="cognome.nome@dominioscolastico.edu.it"
+                                className="w-full border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 text-gray-700 dark:text-slate-300 rounded-lg p-2.5"
+                            />
+                            {!editingId && !schoolDomain && (
+                                <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+                                    Imposta il dominio email in Impostazioni per generare l&apos;indirizzo.
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -227,6 +285,17 @@ const GestioneDocenti = () => {
                                 <p className="text-xs text-gray-500 dark:text-slate-400">Spunta se il docente insegna solo in laboratorio</p>
                             </div>
                         </label>
+
+                        {!editingId && (
+                            <label className="flex items-center gap-3 p-4 border border-gray-200 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors">
+                                <input type="checkbox" name="vicepreside" checked={formData.vicepreside} onChange={handleChange}
+                                       className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                                <div>
+                                    <p className="font-medium text-gray-800 dark:text-slate-100">Vicepreside</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Concede anche i permessi da vicepresidenza</p>
+                                </div>
+                            </label>
+                        )}
                     </div>
 
                     {error && (

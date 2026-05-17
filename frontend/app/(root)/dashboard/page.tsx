@@ -9,6 +9,7 @@ import { SCHOOL_DAYS, type SchoolDay } from "@/lib/orario";
 import type {
   Avviso,
   DashboardSlotDTO,
+  DashboardSostituzioneDTO,
   DashboardStatsDTO,
   DashboardWeeklyDTO,
 } from "@/constants/types";
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [entries, setEntries] = useState<DashboardSlotDTO[]>([]);
   const [stats, setStats] = useState<DashboardStatsDTO | null>(null);
   const [avvisi, setAvvisi] = useState<Avviso[]>([]);
+  const [sostituzioni, setSostituzioni] = useState<DashboardSostituzioneDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isVice, setIsVice] = useState(false);
@@ -65,6 +67,8 @@ export default function DashboardPage() {
   const weekDays = getWeekDays(selectedDate);
   const weekStart = weekDays[0];
   const weekEnd = weekDays[weekDays.length - 1];
+  const currentWeekStart = getWeekDays(new Date().toLocaleDateString("en-CA"))[0];
+  const isCurrentWeek = weekStart === currentWeekStart;
 
   useEffect(() => {
     setIsVice(isVicepreside());
@@ -86,9 +90,9 @@ export default function DashboardPage() {
         const data: DashboardWeeklyDTO = await response.json();
         setEntries(data.slots ?? []);
         setStats(data.stats ?? null);
+        setSostituzioni(data.sostituzioni ?? []);
       } catch (e) {
-        const message = e instanceof Error ? e.message : "Errore sconosciuto";
-        setError(message);
+        setError("Impossibile caricare la dashboard. Riprova tra poco.");
       } finally {
         setLoading(false);
       }
@@ -155,6 +159,11 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-500 dark:text-slate-300" />
             <span className="text-sm">{weekStart} - {weekEnd}</span>
+            {isCurrentWeek && (
+              <span className="rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold px-2 py-0.5">
+                Settimana corrente
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -200,8 +209,42 @@ export default function DashboardPage() {
 
       {error && (
         <p className="rounded-md border border-red-200 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-200">
-          Impossibile caricare l&apos;orario: {error}
+          {error}
         </p>
+      )}
+
+      {!loading && !error && !isVice && (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Sostituzioni assegnate</h2>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Settimana selezionata</span>
+          </div>
+          {sostituzioni.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Nessuna sostituzione in programma.</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {sostituzioni.map((item, index) => (
+                <div
+                  key={`sostituzione-${item.data}-${item.ora}-${index}`}
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-2"
+                >
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+                    <span className="font-semibold">{item.giorno}</span>
+                    <span>{item.data}</span>
+                    <span className="text-slate-400">|</span>
+                    <span>{item.ora}ª ora</span>
+                  </div>
+                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                    Classe {item.classeNome} · {item.materia ?? "Materia non disponibile"} · Aula {item.aula || "-"}
+                  </div>
+                  <div className="text-xs text-rose-600 dark:text-rose-300">
+                    Assente: {item.docenteAssenteNome} {item.docenteAssenteCognome}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {!loading && !error && (

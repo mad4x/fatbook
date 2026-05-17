@@ -24,12 +24,18 @@ public class DocenteService {
     private final UtenteRepository utenteRepository;
     private final DocenteRepository docenteRepository;
     private final MateriaRepository materiaRepository;
+    private final SettingsService settingsService;
 
     @Transactional
     public void creaNuovoDocente(DocenteRequestDTO dto) {
 
+        String emailGenerata = buildEmail(dto.nome(), dto.cognome(), settingsService.getSchoolDomain());
+        if (emailGenerata.isEmpty()) {
+            throw new IllegalArgumentException("Imposta il dominio email nelle impostazioni prima di creare docenti.");
+        }
+
         // 1. Controllo email - Uso dto.email() invece di dto.getEmail()
-        if (utenteRepository.findByEmail(dto.email()).isPresent()) {
+        if (utenteRepository.findByEmail(emailGenerata).isPresent()) {
             throw new IllegalArgumentException("Esiste già un utente con questa email!");
         }
 
@@ -37,8 +43,8 @@ public class DocenteService {
         Utente nuovoUtente = new Utente();
         nuovoUtente.setNome(dto.nome());
         nuovoUtente.setCognome(dto.cognome());
-        nuovoUtente.setEmail(dto.email());
-        nuovoUtente.setRuoli(List.of(RuoliDisponibili.ROLE_DOCENTE));
+        nuovoUtente.setEmail(emailGenerata);
+        nuovoUtente.setRuoli(buildRuoli(dto.vicepreside()));
         utenteRepository.save(nuovoUtente);
 
         // 3. Creazione Docente (senza materie per ora)
@@ -110,6 +116,10 @@ public class DocenteService {
 
         utente.setNome(dto.nome());
         utente.setCognome(dto.cognome());
+
+        if (dto.vicepreside() != null) {
+            utente.setRuoli(buildRuoli(dto.vicepreside()));
+        }
         utenteRepository.save(utente);
 
         docente.setLaboratorio(dto.laboratorio());
@@ -126,6 +136,41 @@ public class DocenteService {
         }
 
         docenteRepository.save(docente);
+    }
+
+    private List<RuoliDisponibili> buildRuoli(Boolean vicepreside) {
+        if (Boolean.TRUE.equals(vicepreside)) {
+            return List.of(RuoliDisponibili.ROLE_DOCENTE, RuoliDisponibili.ROLE_VICEPRESIDE);
+        }
+        return List.of(RuoliDisponibili.ROLE_DOCENTE);
+    }
+
+    private String buildEmail(String nome, String cognome, String domain) {
+        String nomePart = normalizeEmailPart(nome);
+        String cognomePart = normalizeEmailPart(cognome);
+        String domainPart = normalizeDomain(domain);
+        if (nomePart.isEmpty() || cognomePart.isEmpty() || domainPart.isEmpty()) {
+            return "";
+        }
+        return cognomePart + "." + nomePart + "@" + domainPart;
+    }
+
+    private String normalizeEmailPart(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim().toLowerCase().replaceAll("[^a-z0-9]+", "");
+    }
+
+    private String normalizeDomain(String value) {
+        if (value == null) {
+            return "";
+        }
+        String trimmed = value.trim().toLowerCase();
+        while (trimmed.startsWith("@")) {
+            trimmed = trimmed.substring(1);
+        }
+        return trimmed;
     }
 
     @Transactional
