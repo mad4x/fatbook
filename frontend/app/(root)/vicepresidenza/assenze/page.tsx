@@ -174,7 +174,11 @@ const GestioneAssenze = () => {
                 await fetchAssenze(); // Ricarichiamo la tabella
             } else {
                 const errorText = await response.text();
-                setError(errorText || "Impossibile salvare l'assenza. Verifica i dati.");
+                if (errorText.includes("Esiste gia un'assenza")) {
+                    setError("Esiste gia un'assenza per questa ora o per questo giorno.");
+                } else {
+                    setError(errorText || "Impossibile salvare l'assenza. Verifica i dati.");
+                }
             }
         } catch (error) {
             console.error("Errore submit:", error);

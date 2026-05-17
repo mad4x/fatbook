@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Calendar, Clock, AlertCircle, Plus, CheckCircle2, Hourglass } from "lucide-react";
+import { Calendar, Clock, AlertCircle, Plus, CheckCircle2, Hourglass, ChevronLeft, ChevronRight } from "lucide-react";
 import Modal from "@/components/Modal";
 import { getBaseUrl } from "@/lib/api-url";
 import { fetchWithAuth } from "@/lib/jwt";
@@ -94,6 +94,22 @@ const AssenzeDocentePage = () => {
             return;
         }
 
+        const today = new Date().toLocaleDateString("en-CA");
+        if (formData.data < today) {
+            setError("Non puoi richiedere assenze nel passato.");
+            return;
+        }
+
+        const startDate = new Date(formData.data);
+        const endDate = formData.multiDay && formData.dataFine ? new Date(formData.dataFine) : startDate;
+        for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+            const day = date.getDay();
+            if (day === 0 || day === 6) {
+                setError("Non puoi richiedere assenze nel weekend.");
+                return;
+            }
+        }
+
         const payload = {
             data: formData.data,
             dataFine: formData.multiDay ? formData.dataFine : null,
@@ -113,7 +129,11 @@ const AssenzeDocentePage = () => {
                 await fetchAssenze();
             } else {
                 const errorText = await response.text();
-                setError(errorText || "Impossibile inviare la richiesta.");
+                if (errorText.includes("Esiste gia un'assenza")) {
+                    setError("Hai gia richiesto un'assenza per questa ora o per questo giorno.");
+                } else {
+                    setError(errorText || "Impossibile inviare la richiesta.");
+                }
             }
         } catch (error) {
             console.error("Errore submit:", error);
@@ -136,6 +156,8 @@ const AssenzeDocentePage = () => {
     };
 
     const weekDays = getWeekDays(selectedDate);
+    const weekStart = weekDays[0];
+    const weekEnd = weekDays[weekDays.length - 1];
     const hours = [1, 2, 3, 4, 5, 6, 7, 8];
     const assenzeBySlot = new Map<string, AssenzaResponseDTO[]>();
 
@@ -161,16 +183,35 @@ const AssenzeDocentePage = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4">
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <Calendar className="w-5 h-5 text-gray-500 dark:text-slate-300" />
+                        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-slate-100 text-sm rounded-xl px-3 py-2.5 shadow-sm">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const date = new Date(selectedDate);
+                                    date.setDate(date.getDate() - 7);
+                                    setSelectedDate(date.toLocaleDateString("en-CA"));
+                                }}
+                                className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100"
+                                aria-label="Settimana precedente"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-gray-500 dark:text-slate-300" />
+                                <span className="text-sm">{weekStart} - {weekEnd}</span>
                             </div>
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-slate-100 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 shadow-sm"
-                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const date = new Date(selectedDate);
+                                    date.setDate(date.getDate() + 7);
+                                    setSelectedDate(date.toLocaleDateString("en-CA"));
+                                }}
+                                className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100"
+                                aria-label="Settimana successiva"
+                            >
+                                <ChevronRight size={18} />
+                            </button>
                         </div>
 
                         <button
@@ -209,7 +250,7 @@ const AssenzeDocentePage = () => {
                             {hours.map((hour) => (
                                 <tr key={`assenze-${hour}`}>
                                     <td className="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-2 font-semibold text-slate-800 dark:text-slate-100">
-                                        {hour}
+                                        {hour}ª
                                     </td>
 
                                     {weekDays.map((day) => {

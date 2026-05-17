@@ -16,4 +16,8 @@ public interface AssenzaRepository extends JpaRepository<Assenza, Long> {
     List<Assenza> findByApprovataFalseOrderByDataAsc();
 
     List<Assenza> findByDocenteIdAndDataBetweenAndOraIn(Long docenteId, LocalDate dataInizio, LocalDate dataFine, List<Integer> ore);
+
+    List<Assenza> findByDocenteIdAndDataBetweenAndApprovataTrue(Long docenteId, LocalDate dataInizio, LocalDate dataFine);
+
+    List<Assenza> findByDocenteIdAndDataAndGiornalieraTrueAndApprovataFalse(Long docenteId, LocalDate data);
 }

@@ -12,6 +12,7 @@ import spike.fatbook.backend.model.UscitaDidattica;
 import spike.fatbook.backend.model.Utente;
 import spike.fatbook.backend.repository.AssenzaRepository;
 import spike.fatbook.backend.repository.DocenteRepository;
+import spike.fatbook.backend.repository.SostituzioneRepository;
 import spike.fatbook.backend.repository.UscitaDidatticaRepository;
 import spike.fatbook.backend.repository.UtenteRepository;
 
@@ -27,6 +28,7 @@ public class AssenzaService {
     private final DocenteRepository docenteRepository;
     private final UtenteRepository utenteRepository;
     private final UscitaDidatticaRepository uscitaDidatticaRepository;
+    private final SostituzioneRepository sostituzioneRepository;
 
     @Transactional(readOnly = true)
     public List<AssenzaResponseDTO> getAssenzeDelGiorno(LocalDate data) {
@@ -80,6 +82,19 @@ public class AssenzaService {
         LocalDate dataFine = request.dataFine() != null ? request.dataFine() : request.data();
         if (dataFine.isBefore(dataInizio)) {
             throw new IllegalArgumentException("La data fine non può essere precedente alla data inizio.");
+        }
+
+        LocalDate today = LocalDate.now();
+        for (LocalDate data = dataInizio; !data.isAfter(dataFine); data = data.plusDays(1)) {
+            if (data.isBefore(today)) {
+                throw new IllegalArgumentException("Non puoi richiedere assenze nel passato.");
+            }
+
+            switch (data.getDayOfWeek()) {
+                case SATURDAY, SUNDAY -> throw new IllegalArgumentException("Non puoi richiedere assenze nel weekend.");
+                default -> {
+                }
+            }
         }
 
         UscitaDidattica gita = null;
@@ -202,9 +217,25 @@ public class AssenzaService {
         Utente vicepreside = utenteRepository.findByEmail(emailVicepreside)
                 .orElseThrow(() -> new RuntimeException("Utente non autorizzato o non trovato"));
 
-        assenza.setApprovata(true);
-        assenza.setRegistratoDa(vicepreside);
-        assenzaRepository.save(assenza);
+        if (assenza.isGiornaliera()) {
+            List<Assenza> giornaliere = assenzaRepository
+                .findByDocenteIdAndDataAndGiornalieraTrueAndApprovataFalse(
+                    assenza.getDocente().getId(),
+                    assenza.getData()
+                );
+
+            if (!giornaliere.isEmpty()) {
+                for (Assenza item : giornaliere) {
+                    item.setApprovata(true);
+                    item.setRegistratoDa(vicepreside);
+                }
+                assenzaRepository.saveAll(giornaliere);
+            }
+        } else {
+            assenza.setApprovata(true);
+            assenza.setRegistratoDa(vicepreside);
+            assenzaRepository.save(assenza);
+        }
 
         return toResponseDTO(assenza);
     }
@@ -215,6 +246,7 @@ public class AssenzaService {
             throw new RuntimeException("Assenza non trovata con ID: " + assenzaId);
         }
 
+        sostituzioneRepository.deleteByAssenzaId(assenzaId);
         assenzaRepository.deleteById(assenzaId);
     }
 

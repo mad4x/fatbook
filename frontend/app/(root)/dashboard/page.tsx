@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { getBaseUrl } from "@/lib/api-url";
 import { isVicepreside } from "@/lib/jwt";
-import {
-  normalizeOrarioEntry,
-  SCHOOL_DAYS,
-  type NormalizedOrarioEntry,
-  type SchoolDay,
-} from "@/lib/orario";
+import { SCHOOL_DAYS, type SchoolDay } from "@/lib/orario";
+import type {
+  Avviso,
+  DashboardSlotDTO,
+  DashboardStatsDTO,
+  DashboardWeeklyDTO,
+} from "@/constants/types";
 
 const HOURS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
@@ -23,37 +25,56 @@ function getAuthHeaders(): HeadersInit {
 }
 
 function getCells(
-  entries: NormalizedOrarioEntry[],
+  entries: DashboardSlotDTO[],
   day: SchoolDay,
   hour: number,
-): NormalizedOrarioEntry[] {
-  return entries.filter((entry) => entry.day === day && entry.hour === hour);
+): DashboardSlotDTO[] {
+  return entries.filter((entry) => entry.giorno === day && entry.ora === hour);
 }
 
 export default function DashboardPage() {
-  const [entries, setEntries] = useState<NormalizedOrarioEntry[]>([]);
+  const [entries, setEntries] = useState<DashboardSlotDTO[]>([]);
+  const [stats, setStats] = useState<DashboardStatsDTO | null>(null);
+  const [avvisi, setAvvisi] = useState<Avviso[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isVice, setIsVice] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString("en-CA"));
 
-  const classiCount = new Set(entries.map((entry) => entry.className)).size;
-  const auleCount = new Set(entries.map((entry) => entry.classroom).filter(Boolean)).size;
-  const oreTotali = entries.length;
+  const classiCount = new Set(entries.map((entry) => entry.classeNome)).size;
+  const auleCount = new Set(entries.map((entry) => entry.aula).filter(Boolean)).size;
+  const oreTotali = stats?.oreTotali ?? 0;
+  const oreAssenza = stats?.oreAssenza ?? 0;
+  const orePresenza = stats?.orePresenza ?? 0;
+  const percentualeAssenza = stats?.percentualeAssenza ?? 0;
+
+  const getWeekDays = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDay();
+    const offset = day === 0 ? -6 : 1 - day;
+    const monday = new Date(date);
+    monday.setDate(date.getDate() + offset);
+
+    return Array.from({ length: 5 }, (_, index) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + index);
+      return d.toLocaleDateString("en-CA");
+    });
+  };
+
+  const weekDays = getWeekDays(selectedDate);
+  const weekStart = weekDays[0];
+  const weekEnd = weekDays[weekDays.length - 1];
 
   useEffect(() => {
     setIsVice(isVicepreside());
 
-    if (isVicepreside()) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchWeeklyOrario = async () => {
+    const fetchDashboard = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(`${getBaseUrl()}/orario/weekly`, {
+        const response = await fetch(`${getBaseUrl()}/dashboard/weekly?date=${selectedDate}`, {
           cache: "no-store",
           headers: getAuthHeaders(),
         });
@@ -62,12 +83,9 @@ export default function DashboardPage() {
           throw new Error(`Errore API: ${response.status}`);
         }
 
-        const data: unknown = await response.json();
-        if (!Array.isArray(data)) {
-          throw new Error("Formato risposta non valido");
-        }
-
-        setEntries(data.map(normalizeOrarioEntry));
+        const data: DashboardWeeklyDTO = await response.json();
+        setEntries(data.slots ?? []);
+        setStats(data.stats ?? null);
       } catch (e) {
         const message = e instanceof Error ? e.message : "Errore sconosciuto";
         setError(message);
@@ -76,8 +94,27 @@ export default function DashboardPage() {
       }
     };
 
-    void fetchWeeklyOrario();
-  }, []);
+    const fetchAvvisi = async () => {
+      try {
+        const response = await fetch(`${getBaseUrl()}/avvisi`, {
+          cache: "no-store",
+          headers: getAuthHeaders(),
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data: Avviso[] = await response.json();
+        setAvvisi(data.slice(0, 3));
+      } catch {
+        setAvvisi([]);
+      }
+    };
+
+    void fetchDashboard();
+    void fetchAvvisi();
+  }, [selectedDate]);
 
   return (
     <section className="mx-4 my-6 space-y-6">
@@ -101,37 +138,73 @@ export default function DashboardPage() {
         </header>
       )}
 
-      {!isVice && (
-        <div className="grid gap-4 md:grid-cols-3">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-slate-100 text-sm rounded-xl px-3 py-2.5 shadow-sm">
+          <button
+            type="button"
+            onClick={() => {
+              const date = new Date(selectedDate);
+              date.setDate(date.getDate() - 7);
+              setSelectedDate(date.toLocaleDateString("en-CA"));
+            }}
+            className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100"
+            aria-label="Settimana precedente"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gray-500 dark:text-slate-300" />
+            <span className="text-sm">{weekStart} - {weekEnd}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const date = new Date(selectedDate);
+              date.setDate(date.getDate() + 7);
+              setSelectedDate(date.toLocaleDateString("en-CA"));
+            }}
+            className="text-gray-500 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100"
+            aria-label="Settimana successiva"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 shadow-sm">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Ore settimanali</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{oreTotali}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Totale slot assegnati.</p>
         </div>
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Classi attive</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{classiCount}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Classi coinvolte.</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Ore presenza</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{orePresenza}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Lezioni coperte.</p>
         </div>
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Aule usate</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{auleCount}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Laboratori e aule standard.</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Ore assenza</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{oreAssenza}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Slot assenti.</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">% assenza</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{percentualeAssenza.toFixed(1)}%</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Rapporto settimanale.</p>
         </div>
       </div>
-      )}
 
-      {!isVice && loading && (
+      {loading && (
         <p className="text-sm text-slate-600 dark:text-slate-400">Caricamento orario in corso...</p>
       )}
 
-      {!isVice && error && (
+      {error && (
         <p className="rounded-md border border-red-200 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-200">
           Impossibile caricare l&apos;orario: {error}
         </p>
       )}
 
-      {!isVice && !loading && !error && (
+      {!loading && !error && (
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
           <table className="min-w-full border-collapse text-sm">
             <thead>
@@ -163,12 +236,22 @@ export default function DashboardPage() {
                           <div className="space-y-2">
                             {cells.map((cell, index) => (
                               <div
-                                key={`${cell.className}-${cell.subject}-${index}`}
+                                key={`${cell.classeNome}-${cell.materia}-${index}`}
                                 className="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-2 py-1"
                               >
-                                <p className="font-medium text-slate-900 dark:text-slate-100">{cell.subject}</p>
-                                <p className="text-xs text-slate-600 dark:text-slate-400">Classe {cell.className}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-500">Aula {cell.classroom || '-'}</p>
+                                <p className="font-medium text-slate-900 dark:text-slate-100">{cell.materia}</p>
+                                <p className="text-xs text-slate-600 dark:text-slate-400">Classe {cell.classeNome}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-500">Aula {cell.aula || '-'}</p>
+                                {cell.docenteAssenteNome && (
+                                  <p className="text-xs text-rose-600 dark:text-rose-300">
+                                    Assente: {cell.docenteAssenteNome} {cell.docenteAssenteCognome}
+                                  </p>
+                                )}
+                                {(cell.docenteSostitutoNome || cell.supplenteNome) && (
+                                  <p className="text-xs text-emerald-600 dark:text-emerald-300">
+                                    Sostituto: {cell.docenteSostitutoNome ? `${cell.docenteSostitutoNome} ${cell.docenteSostitutoCognome}` : cell.supplenteNome}
+                                  </p>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -180,6 +263,31 @@ export default function DashboardPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Ultimi avvisi</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Le ultime comunicazioni pubblicate.</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            {avvisi.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Nessun avviso disponibile.</p>
+            ) : (
+              avvisi.map((avviso) => (
+                <div key={`avviso-${avviso.id}`} className="rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{avviso.titolo}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {new Date(avviso.dataCreazione).toLocaleDateString("it-IT")} · {avviso.priorita}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </section>
