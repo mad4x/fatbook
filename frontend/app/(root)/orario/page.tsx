@@ -252,7 +252,7 @@ export default function OrarioPage() {
 										{HOURS.map((hour) => (
 											<tr key={`${group.key}-${hour}`}>
 												<td className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 font-semibold text-slate-800 dark:text-slate-100">
-													{hour}
+													{hour}ª
 												</td>
 												{SCHOOL_DAYS.map((day) => {
 													const cell = getCell(group.entries, day, hour);

@@ -11,22 +11,26 @@ import {AssenzaResponseDTO, DocenteResponseDTO} from "@/constants/types";
 
 const GestioneAssenze = () => {
     // Otteniamo la data di oggi in formato YYYY-MM-DD
-    const oggi = new Date().toISOString().split('T')[0];
+    const oggi = new Date().toLocaleDateString('en-CA');
 
     const [selectedDate, setSelectedDate] = useState(oggi);
     const [assenze, setAssenze] = useState<AssenzaResponseDTO[]>([]);
+    const [richieste, setRichieste] = useState<AssenzaResponseDTO[]>([]);
     const [docenti, setDocenti] = useState<DocenteResponseDTO[]>([]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         docenteId: '',
         data: oggi,
+        dataFine: '',
+        multiDay: false,
         motivazione: '',
         giornaliera: true,
         ora: '' as number | string,
         uscitaDidatticaId: null
     });
     const [error, setError] = useState("");
+    const [richiesteError, setRichiesteError] = useState("");
 
     const [assenzaDaEliminare, setAssenzaDaEliminare] = useState<number | null>(null);
     const [deleteError, setDeleteError] = useState("");
@@ -59,6 +63,21 @@ const GestioneAssenze = () => {
         }
     }, [selectedDate]);
 
+    const fetchRichieste = useCallback(async () => {
+        try {
+            const response = await fetchWithAuth(`${getBaseUrl()}/assenze/richieste`);
+            if (response.ok) {
+                const data = await response.json();
+                setRichieste(data);
+            } else {
+                setRichiesteError("Impossibile caricare le richieste.");
+            }
+        } catch (error) {
+            console.error("Errore nel caricamento delle richieste", error);
+            setRichiesteError("Errore di rete durante il caricamento delle richieste.");
+        }
+    }, []);
+
     // Effetti al mount e al cambio data
     useEffect(() => {
         fetchDocenti();
@@ -68,21 +87,57 @@ const GestioneAssenze = () => {
         fetchAssenze();
     }, [fetchAssenze]);
 
+    useEffect(() => {
+        fetchRichieste();
+    }, [fetchRichieste]);
+
     // Gestione input form
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked;
-            setFormData(prev => ({ ...prev, [name]: checked, ora: checked ? '' : prev.ora }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
+            if (name === 'giornaliera') {
+                setFormData(prev => ({ ...prev, giornaliera: checked, ora: checked ? '' : prev.ora }));
+                return;
+            }
+
+            if (name === 'multiDay') {
+                setFormData(prev => ({
+                    ...prev,
+                    multiDay: checked,
+                    dataFine: checked ? (prev.dataFine || prev.data) : ''
+                }));
+                return;
+            }
+
+            setFormData(prev => ({ ...prev, [name]: checked }));
+            return;
         }
+
+        if (name === 'data') {
+            setFormData(prev => {
+                const nextDataFine = prev.multiDay && prev.dataFine && prev.dataFine < value ? value : prev.dataFine;
+                return { ...prev, data: value, dataFine: nextDataFine };
+            });
+            return;
+        }
+
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     // Apri modale e precompila la data
     const handleOpenModal = () => {
-        setFormData(prev => ({ ...prev, data: selectedDate, docenteId: '', motivazione: '', giornaliera: true, ora: '' }));
+        setFormData(prev => ({
+            ...prev,
+            data: selectedDate,
+            dataFine: '',
+            multiDay: false,
+            docenteId: '',
+            motivazione: '',
+            giornaliera: true,
+            ora: ''
+        }));
         setError("");
         setIsModalOpen(true);
     };
@@ -90,13 +145,21 @@ const GestioneAssenze = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        setError("");
+
+        if (formData.multiDay && !formData.dataFine) {
+            setError("Seleziona una data fine per l'assenza su più giorni.");
+            return;
+        }
+
         // Prepariamo il payload, convertendo l'ID e gestendo i null
         const payload = {
             docenteId: Number(formData.docenteId),
             data: formData.data,
+            dataFine: formData.multiDay ? formData.dataFine : null,
             motivazione: formData.motivazione,
             giornaliera: formData.giornaliera,
-            ora: formData.giornaliera ? null : Number(formData.ora),
+            ora: formData.giornaliera ? null : (formData.ora === '' ? null : Number(formData.ora)),
             uscitaDidatticaId: null // Aggiungi la gestione gite in futuro se serve
         };
 
@@ -110,7 +173,8 @@ const GestioneAssenze = () => {
                 setIsModalOpen(false);
                 await fetchAssenze(); // Ricarichiamo la tabella
             } else {
-                setError("Impossibile salvare l'assenza. Verifica i dati.");
+                const errorText = await response.text();
+                setError(errorText || "Impossibile salvare l'assenza. Verifica i dati.");
             }
         } catch (error) {
             console.error("Errore submit:", error);
@@ -132,6 +196,24 @@ const GestioneAssenze = () => {
             }
         } catch (error) {
             setDeleteError("Si è verificato un errore di rete.");
+        }
+    };
+
+    const approvaRichiesta = async (id: number) => {
+        setRichiesteError("");
+        try {
+            const response = await fetchWithAuth(`${getBaseUrl()}/assenze/richieste/${id}/approva`, {
+                method: "POST"
+            });
+
+            if (response.ok) {
+                await Promise.all([fetchRichieste(), fetchAssenze()]);
+            } else {
+                const errorText = await response.text();
+                setRichiesteError(errorText || "Impossibile approvare la richiesta.");
+            }
+        } catch (error) {
+            setRichiesteError("Errore di rete durante l'approvazione.");
         }
     };
 
@@ -171,6 +253,71 @@ const GestioneAssenze = () => {
             </div>
 
             {/* TABELLA ASSENZE (Puoi estrarla in un componente TabellaAssenze.tsx) */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden mb-8">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+                    <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Richieste di assenza</h2>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Da approvare</p>
+                </div>
+
+                {richiesteError && (
+                    <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-200 text-sm rounded-lg border border-red-100 dark:border-red-500/30">
+                        {richiesteError}
+                    </div>
+                )}
+
+                {richieste.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 dark:text-slate-400">
+                        Nessuna richiesta in attesa.
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                            <tr className="bg-gray-50/50 dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700">
+                                <th className="py-3 px-6 text-xs font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wider">Docente</th>
+                                <th className="py-3 px-6 text-xs font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wider">Data</th>
+                                <th className="py-3 px-6 text-xs font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wider">Tipo</th>
+                                <th className="py-3 px-6 text-xs font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wider text-right">Azioni</th>
+                            </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                            {richieste.map((richiesta) => (
+                                <tr key={richiesta.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800 transition-colors">
+                                    <td className="py-3 px-6">
+                                        <div className="font-medium text-gray-900 dark:text-slate-100">
+                                            {richiesta.nomeDocente} {richiesta.cognomeDocente}
+                                        </div>
+                                        <div className="text-sm text-gray-500 dark:text-slate-400">{richiesta.emailDocente}</div>
+                                    </td>
+                                    <td className="py-3 px-6 text-sm text-gray-600 dark:text-slate-300">{richiesta.data}</td>
+                                    <td className="py-3 px-6">
+                                        {richiesta.giornaliera ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-200">
+                                                <Calendar size={14} />
+                                                {richiesta.ora ? `Giornaliera - ${richiesta.ora}ª Ora` : 'Giornaliera'}
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-200">
+                                                <Clock size={14} /> {richiesta.ora}ª Ora
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="py-3 px-6 text-right">
+                                        <button
+                                            onClick={() => approvaRichiesta(richiesta.id)}
+                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors"
+                                        >
+                                            Approva
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
                 {assenze.length === 0 ? (
                     <div className="p-12 text-center text-gray-500 dark:text-slate-400 flex flex-col items-center">
@@ -199,12 +346,13 @@ const GestioneAssenze = () => {
                                     <td className="py-4 px-6">
                                         {assenza.giornaliera ? (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-200">
-                                                    <Calendar size={14} /> Giornaliera
-                                                </span>
+                                                <Calendar size={14} />
+                                                {assenza.ora ? `Giornaliera - ${assenza.ora}ª Ora` : 'Giornaliera'}
+                                            </span>
                                         ) : (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-200">
-                                                    <Clock size={14} /> {assenza.ora}ª Ora
-                                                </span>
+                                                <Clock size={14} /> {assenza.ora}ª Ora
+                                            </span>
                                         )}
                                     </td>
                                     <td className="py-4 px-6 text-sm text-gray-600 dark:text-slate-300">
@@ -279,6 +427,36 @@ const GestioneAssenze = () => {
                                     <span className="font-medium text-gray-800 dark:text-slate-100">Intera giornata</span>
                                 </label>
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col justify-center">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="multiDay"
+                                        checked={formData.multiDay}
+                                        onChange={handleChange}
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                    />
+                                    <span className="font-medium text-gray-800 dark:text-slate-100">Più giorni</span>
+                                </label>
+                            </div>
+
+                            {formData.multiDay && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Data fine</label>
+                                    <input
+                                        type="date"
+                                        name="dataFine"
+                                        required={formData.multiDay}
+                                        min={formData.data}
+                                        value={formData.dataFine}
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100"
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Appare dinamicamente solo se togli la spunta a "Intera giornata" */}

@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import spike.fatbook.backend.dto.AssenzaRequestDTO;
 import spike.fatbook.backend.dto.AssenzaResponseDTO;
-import spike.fatbook.backend.model.Assenza;
+import spike.fatbook.backend.dto.AssenzaRichiestaDTO;
 import spike.fatbook.backend.service.AssenzaService;
 
 import java.security.Principal;
@@ -31,13 +31,42 @@ public class AssenzaController {
         return ResponseEntity.ok(assenze);
     }
 
+    @GetMapping("/mie")
+    public ResponseEntity<@NonNull List<AssenzaResponseDTO>> getAssenzeDocente(Principal principal) {
+        String emailDocente = principal.getName();
+        return ResponseEntity.ok(assenzaService.getAssenzeDocente(emailDocente));
+    }
+
+    @GetMapping("/richieste")
+    public ResponseEntity<@NonNull List<AssenzaResponseDTO>> getRichiesteAssenze() {
+        return ResponseEntity.ok(assenzaService.getRichiesteAssenze());
+    }
+
     @PostMapping
-    public ResponseEntity<?> creaAssenza(@RequestBody AssenzaRequestDTO dto, Principal principal) {
+    public ResponseEntity<@NonNull List<AssenzaResponseDTO>> creaAssenza(@RequestBody AssenzaRequestDTO dto, Principal principal) {
         // principal.getName() restituisce il "subject" del JWT, che di solito è l'email
         String emailVicepreside = principal.getName();
 
-        AssenzaResponseDTO responseDTO = assenzaService.registraAssenza(dto, emailVicepreside);
+        List<AssenzaResponseDTO> responseDTOs = assenzaService.registraAssenza(dto, emailVicepreside);
 
-        return ResponseEntity.ok(responseDTO);
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    @PostMapping("/richieste")
+    public ResponseEntity<@NonNull List<AssenzaResponseDTO>> richiediAssenza(@RequestBody AssenzaRichiestaDTO dto, Principal principal) {
+        String emailDocente = principal.getName();
+        return ResponseEntity.ok(assenzaService.richiediAssenza(dto, emailDocente));
+    }
+
+    @PostMapping("/richieste/{id}/approva")
+    public ResponseEntity<AssenzaResponseDTO> approvaRichiesta(@PathVariable Long id, Principal principal) {
+        String emailVicepreside = principal.getName();
+        return ResponseEntity.ok(assenzaService.approvaRichiesta(id, emailVicepreside));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminaAssenza(@PathVariable Long id) {
+        assenzaService.eliminaAssenza(id);
+        return ResponseEntity.noContent().build();
     }
 }

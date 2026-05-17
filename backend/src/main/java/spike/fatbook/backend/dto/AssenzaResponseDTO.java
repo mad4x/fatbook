@@ -8,6 +8,7 @@ public record AssenzaResponseDTO(
     Integer ora,
     String motivazione,
     boolean giornaliera,
+    boolean approvata,
     String nomeDocente,
     String cognomeDocente,
     String emailDocente

@@ -2,12 +2,10 @@ package spike.fatbook.backend.dto;
 
 import java.time.LocalDate;
 
-public record AssenzaRequestDTO(
-    Long docenteId,
+public record AssenzaRichiestaDTO(
     LocalDate data,
     LocalDate dataFine,
     Integer ora,
     String motivazione,
-    Boolean giornaliera,
-    Long uscitaDidatticaId
+    Boolean giornaliera
 ) {}

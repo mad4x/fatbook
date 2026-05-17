@@ -7,5 +7,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface AssenzaRepository extends JpaRepository<Assenza, Long> {
-    public List<Assenza> findByData(LocalDate data);
+    List<Assenza> findByData(LocalDate data);
+
+    List<Assenza> findByDataAndApprovataTrue(LocalDate data);
+
+    List<Assenza> findByDocenteIdOrderByDataDesc(Long docenteId);
+
+    List<Assenza> findByApprovataFalseOrderByDataAsc();
+
+    List<Assenza> findByDocenteIdAndDataBetweenAndOraIn(Long docenteId, LocalDate dataInizio, LocalDate dataFine, List<Integer> ore);
 }

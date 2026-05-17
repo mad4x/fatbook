@@ -149,7 +149,7 @@ export default function DashboardPage() {
               {HOURS.map((hour) => (
                 <tr key={`dashboard-${hour}`}>
                   <td className="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-2 font-semibold text-slate-800 dark:text-slate-100">
-                    {hour}
+                    {hour}ª
                   </td>
 
                   {SCHOOL_DAYS.map((day) => {

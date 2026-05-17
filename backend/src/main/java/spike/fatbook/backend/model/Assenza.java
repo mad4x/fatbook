@@ -37,6 +37,10 @@ public class Assenza {
     private boolean giornaliera = true;
 
     @Setter
+    @Column(nullable = false)
+    private boolean approvata = true;
+
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uscita_didattica_id")
     private UscitaDidattica uscitaDidattica;

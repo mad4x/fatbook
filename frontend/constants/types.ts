@@ -14,6 +14,7 @@ export interface AssenzaResponseDTO {
     ora: number | null;
     motivazione: string;
     giornaliera: boolean;
+    approvata: boolean;
     nomeDocente: string;
     cognomeDocente: string;
     emailDocente: string;
