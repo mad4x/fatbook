@@ -7,21 +7,48 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432" # Fondamentale: espone il DB al tuo PC
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin-container
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
+  backend:
+    build: ./backend
+    container_name: spring-backend
+    restart: always
     depends_on:
       - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Passiamo l'URL pubblico (per il browser del vicepreside) al momento della build
+        - NEXT_PUBLIC_API_URL=${DOMINIO_BACKEND}
+    container_name: react-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      # Passiamo l'URL interno (per Next.js sul server) a runtime
+      - SERVER_API_URL=http://backend:8080/api
+      - AUTH_SECRET=${AUTH_SECRET}
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-server
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:

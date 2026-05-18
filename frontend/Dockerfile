@@ -13,8 +13,22 @@ RUN npm install
 # Copia tutto il resto del codice sorgente
 COPY . .
 
+# --- INIZIO CONFIGURAZIONE PRODUZIONE ---
+
+# 1. Cattura le variabili pubbliche passate dal docker-compose.yml
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Se nel tuo .env globale hai ALTRE variabili che iniziano con NEXT_PUBLIC_,
+# devi scommentare e aggiungere anche loro qui sotto nello stesso modo:
+# ARG NEXT_PUBLIC_AUTH_CLIENT_ID
+# ENV NEXT_PUBLIC_AUTH_CLIENT_ID=$NEXT_PUBLIC_AUTH_CLIENT_ID
+
+# 2. Compila l'applicazione per la produzione (crea la cartella ottimizzata .next)
+RUN npm run build
+
 # Espone la porta 3000
 EXPOSE 3000
 
-# Comando di avvio (in modalità sviluppo per vedere le modifiche live)
-CMD ["npm", "run", "dev"]
+# 3. Comando di avvio in modalità PRODUZIONE (molto più veloce e sicuro di dev)
+CMD ["npm", "run", "start"]

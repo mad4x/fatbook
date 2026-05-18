@@ -1,0 +1,9 @@
+# Inoltra il traffico del sito web al container React
+freyja.vps.webdock.cloud {
+    reverse_proxy frontend:3000
+}
+
+# Inoltra il traffico delle API al container Spring Boot
+api.freyja.vps.webdock.cloud {
+    reverse_proxy backend:8080
+}
