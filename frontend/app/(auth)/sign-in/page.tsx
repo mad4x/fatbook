@@ -67,10 +67,9 @@ const LoginPage = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signIn("google",{
-        redirectTo: "/dashboard",
+      await signIn("google", {
+        callbackUrl: "/dashboard",
       });
-
     } catch (error) {
       console.error(error);
     }
