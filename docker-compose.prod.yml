@@ -20,6 +20,9 @@ services:
       dockerfile: Dockerfile.prod
       args:
         NEXT_PUBLIC_API_URL: https://${APP_DOMAIN}/backend/api
+        AUTH_SECRET: ${AUTH_SECRET}
+        AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
+        AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}
     container_name: fatbook-frontend
     restart: unless-stopped
     environment:
