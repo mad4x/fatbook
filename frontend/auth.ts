@@ -8,7 +8,7 @@ if (!googleClientId || !googleClientSecret) {
     throw new Error("Missing AUTH_GOOGLE_ID or AUTH_GOOGLE_SECRET")
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers,    } = NextAuth({
     providers: [
         Google({
             clientId: googleClientId,

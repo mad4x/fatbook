@@ -1,12 +1,12 @@
 import { Avviso, AvvisoFormData, AvvisoWritePayload, FiltroPrioritaAvviso, PrioritaAvviso, StatoAvviso } from '@/constants/types';
 
-export const parseMultiValue = (input: string): string[] =>
+const parseMultiValue = (input: string): string[] =>
   input
     .split(',')
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 
-export const normalizeList = (value: unknown): string[] => {
+const normalizeList = (value: unknown): string[] => {
   if (Array.isArray(value)) {
     return value
       .map((item) => (typeof item === 'string' ? item.trim() : ''))
@@ -36,7 +36,7 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-export const toDataUrlList = async (files: File[]): Promise<string[]> => {
+const toDataUrlList = async (files: File[]): Promise<string[]> => {
   if (files.length === 0) {
     return [];
   }
