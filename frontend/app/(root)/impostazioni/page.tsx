@@ -34,6 +34,8 @@ const ImpostazioniPage = () => {
   const [hydrated, setHydrated] = useState(false);
   const [schoolDomain, setSchoolDomain] = useState("");
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
 
   const isVicepreside = hasVicepresidenzaRole(userRoles);
 
@@ -135,6 +137,41 @@ const ImpostazioniPage = () => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handlePasswordChange = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPasswordMessage(null);
+
+    if (!passwordForm.current || !passwordForm.next) {
+      setPasswordMessage("Inserisci la password attuale e quella nuova.");
+      return;
+    }
+    if (passwordForm.next !== passwordForm.confirm) {
+      setPasswordMessage("Le nuove password non coincidono.");
+      return;
+    }
+
+    try {
+      const response = await fetchWithAuth(`${getBaseUrl()}/users/me/password`, {
+        method: "POST",
+        body: JSON.stringify({
+          currentPassword: passwordForm.current,
+          newPassword: passwordForm.next,
+        }),
+      });
+
+      if (response.ok) {
+        setPasswordMessage("Password aggiornata con successo.");
+        setPasswordForm({ current: "", next: "", confirm: "" });
+        return;
+      }
+
+      const text = await response.text();
+      setPasswordMessage(text || "Impossibile aggiornare la password.");
+    } catch {
+      setPasswordMessage("Errore di rete durante il cambio password.");
+    }
+  };
+
   return (
     <section className="p-8 max-w-6xl mx-auto w-full h-full space-y-6">
       <header className="space-y-2">
@@ -229,6 +266,44 @@ const ImpostazioniPage = () => {
         </div>
 
         <div className="space-y-6">
+          <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Password account</h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400">
+              Aggiorna la password dopo il primo accesso o quando necessario.
+            </p>
+            <form className="mt-4 space-y-3" onSubmit={handlePasswordChange}>
+              <input
+                type="password"
+                placeholder="Password attuale"
+                value={passwordForm.current}
+                onChange={(e) => setPasswordForm((prev) => ({ ...prev, current: e.target.value }))}
+                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-800 dark:text-slate-100 px-3 py-2"
+              />
+              <input
+                type="password"
+                placeholder="Nuova password"
+                value={passwordForm.next}
+                onChange={(e) => setPasswordForm((prev) => ({ ...prev, next: e.target.value }))}
+                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-800 dark:text-slate-100 px-3 py-2"
+              />
+              <input
+                type="password"
+                placeholder="Conferma nuova password"
+                value={passwordForm.confirm}
+                onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirm: e.target.value }))}
+                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-800 dark:text-slate-100 px-3 py-2"
+              />
+              {passwordMessage && (
+                <p className="text-xs text-gray-600 dark:text-slate-300">{passwordMessage}</p>
+              )}
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2"
+              >
+                Aggiorna password
+              </button>
+            </form>
+          </div>
           {isVicepreside && (
             <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">Impostazioni Vicepreside</h2>

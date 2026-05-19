@@ -30,11 +30,16 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .map(Enum::name)
                 .toList();
 
+        String passwordHash = utente.getPasswordHash();
+        if (passwordHash == null || passwordHash.isBlank()) {
+            throw new UsernameNotFoundException("Password non impostata per l'utente: " + username);
+        }
+
         return User.builder()
-                .username(utente.getEmail())
-                .password("{noop}placeholder") // Meglio mettere questo per evitare errori del builder
-                .disabled(utente.isEliminato())
-                .authorities(ruoli.toArray(new String[0]))
-                .build();
+            .username(utente.getEmail())
+            .password(passwordHash)
+            .disabled(utente.isEliminato())
+            .authorities(ruoli.toArray(new String[0]))
+            .build();
     }
 }

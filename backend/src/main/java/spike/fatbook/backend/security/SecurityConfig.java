@@ -47,6 +47,7 @@ public class SecurityConfig {
                 // 2. Regole di accesso
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Lascia passare tutti per il login/registrazione
+                    .requestMatchers("/api/setup/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/avvisi/*/letti").hasAnyRole("VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
                     .requestMatchers(HttpMethod.POST, "/api/avvisi/*/letto").hasAnyRole("DOCENTE", "VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/avvisi/**").hasAnyRole("DOCENTE", "VICEPRESIDE", "VICEPRESIDENZA", "ADMIN")

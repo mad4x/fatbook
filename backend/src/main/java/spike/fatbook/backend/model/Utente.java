@@ -1,5 +1,7 @@
 package spike.fatbook.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import spike.fatbook.backend.enums.RuoliDisponibili;
@@ -29,6 +31,12 @@ public class Utente {
     @Setter
     @Column(nullable = false, unique = true)
     private String email;
+
+    @Setter
+    @JsonAlias("password")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "password_hash")
+    private String passwordHash;
 
     @Setter
     @Column(nullable = false)

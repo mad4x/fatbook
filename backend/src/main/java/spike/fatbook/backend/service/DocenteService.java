@@ -1,6 +1,9 @@
 package spike.fatbook.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,15 +19,20 @@ import spike.fatbook.backend.repository.MateriaRepository;
 import spike.fatbook.backend.repository.UtenteRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class DocenteService {
 
+    private static final Logger logger = LoggerFactory.getLogger(DocenteService.class);
+
     private final UtenteRepository utenteRepository;
     private final DocenteRepository docenteRepository;
     private final MateriaRepository materiaRepository;
     private final SettingsService settingsService;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Transactional
     public void creaNuovoDocente(DocenteRequestDTO dto) {
@@ -45,7 +53,12 @@ public class DocenteService {
         nuovoUtente.setCognome(dto.cognome());
         nuovoUtente.setEmail(emailGenerata);
         nuovoUtente.setRuoli(buildRuoli(dto.vicepreside()));
+        String rawPassword = generateTemporaryPassword();
+        nuovoUtente.setPasswordHash(passwordEncoder.encode(rawPassword));
         utenteRepository.save(nuovoUtente);
+
+        logger.warn("Password temporanea per {}: {}", emailGenerata, rawPassword);
+        emailService.sendDocentePassword(emailGenerata, rawPassword);
 
         // 3. Creazione Docente (senza materie per ora)
         Docente nuovoDocente = new Docente();
@@ -68,6 +81,11 @@ public class DocenteService {
 
         // 5. Salviamo il Docente
         docenteRepository.save(nuovoDocente);
+    }
+
+    private String generateTemporaryPassword() {
+        String token = UUID.randomUUID().toString().replace("-", "");
+        return token.substring(0, 12);
     }
 
     public List<DocenteResponseDTO> getAllDocenti() {

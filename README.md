@@ -28,3 +28,23 @@ UI/UX & Print Engine: Sviluppo di un layout di stampa ottimizzato tramite CSS Me
 👥 Metodologia e Versioning
 
 Il progetto è gestito a Sprint (metodologia SCRUM) applicando il **Vertical Slicing**. Ogni commit rispetta la regola dell'atomicità per isolare le singole feature introdotte.
+
+
+per fare un bootstrap del progetto runnare 
+
+$body = @{
+  nome = "nome"
+  cognome = "cognome"
+  email = "cognome.nome@dominio.com"
+  password = "PasswordSicura123"
+  laboratorio = $false
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/api/setup/bootstrap" `
+  -Headers @{ "X-Bootstrap-Token" = "una_stringa_lunga" } `
+  -ContentType "application/json" `
+  -Body $body
+
+sul powershell
